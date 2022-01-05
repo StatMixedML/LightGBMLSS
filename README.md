@@ -6,7 +6,7 @@ We propose a new framework of LightGBM that predicts the entire conditional dist
 
 ## News
 :boom: [2022-01-04] LightGBMLSS now supports estimating the full predictive distribution via [Expectile Regression](https://epub.ub.uni-muenchen.de/31542/1/1471082x14561155.pdf). <br/>
-<!-- :boom: [2022-01-04] LightGBMLSS now supports automatic derivation of Gradients and Hessians. <br/> -->
+:boom: [2022-01-04] LightGBMLSS now supports automatic derivation of Gradients and Hessians. <br/>
 :boom: [2022-01-04] LightGBMLSS is initialized with suitable starting values to improve convergence of estimation. <br/>
 :boom: [2022-01-04] LightGBMLSS v0.1.0 is released!
 
