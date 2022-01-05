@@ -5,8 +5,8 @@
 We propose a new framework of LightGBM that predicts the entire conditional distribution of a univariate response variable. In particular, **LightGBMLSS** models all moments of a parametric distribution, i.e., mean, location, scale and shape (LSS), instead of the conditional mean only. Choosing from a wide range of continuous, discrete, and mixed discrete-continuous distribution, modelling and predicting the entire conditional distribution greatly enhances the flexibility of LightGBM, as it allows to create probabilistic forecasts from which prediction intervals and quantiles of interest can be derived.
 
 ## News
-:boom: [2022-01-04] LightGBMLSS now supports estimating the full predictive distribution via [Expectile Regression](https://epub.ub.uni-muenchen.de/31542/1/1471082x14561155.pdf). <br/>
-:boom: [2022-01-04] LightGBMLSS now supports automatic derivation of Gradients and Hessians. <br/>
+:boom: [2022-01-05] LightGBMLSS now supports estimating the full predictive distribution via [Expectile Regression](https://epub.ub.uni-muenchen.de/31542/1/1471082x14561155.pdf). <br/>
+:boom: [2022-01-05] LightGBMLSS now supports automatic derivation of Gradients and Hessians. <br/>
 :boom: [2022-01-04] LightGBMLSS is initialized with suitable starting values to improve convergence of estimation. <br/>
 :boom: [2022-01-04] LightGBMLSS v0.1.0 is released!
 
