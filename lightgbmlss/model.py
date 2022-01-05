@@ -385,13 +385,17 @@ class lightgbmlss:
         '''
 
         dict_param = dist.param_dict()
-
         predt = booster.predict(dtest, predict_raw_score=True)
+
+        # Set init_score as starting point for each distributional parameter.
+        init_score_pred = (np.ones(shape=(dtest.shape[0], 1))) * dist.start_values
 
         dist_params_predts = []
 
+        # The prediction result doesn't include the init_score specified in creating the train data.
+        # Hence, it needs to be added manually with the corresponding transform for each distributional parameter.
         for i, (dist_param, response_fun) in enumerate(dict_param.items()):
-            dist_params_predts.append(response_fun(predt[:, i] + dist.start_values[i]))
+            dist_params_predts.append(response_fun(predt[:, i] + init_score_pred[:, i]))
 
         dist_params_df = pd.DataFrame(dist_params_predts).T
         dist_params_df.columns = dict_param.keys()
