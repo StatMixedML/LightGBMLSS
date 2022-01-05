@@ -1,12 +1,18 @@
+<img align="right" width="156.5223" height="181.3" src="../master/figures/LightGBMLSS.png">
+
+
 # LightGBMLSS - An extension of LightGBM to probabilistic forecasting
 We propose a new framework of LightGBM that predicts the entire conditional distribution of a univariate response variable. In particular, **LightGBMLSS** models all moments of a parametric distribution, i.e., mean, location, scale and shape (LSS), instead of the conditional mean only. Choosing from a wide range of continuous, discrete, and mixed discrete-continuous distribution, modelling and predicting the entire conditional distribution greatly enhances the flexibility of LightGBM, as it allows to create probabilistic forecasts from which prediction intervals and quantiles of interest can be derived.
 
 ## News
-:boom: [2022-01-04] LightGBMLSS  is initialized with suitable starting values to improve convergence of estimation. <br/>
+:boom: [2022-01-04] LightGBMLSS now supports estimating the full predictive distribution via [Expectile Regression](https://epub.ub.uni-muenchen.de/31542/1/1471082x14561155.pdf). <br/>
+<!-- :boom: [2022-01-04] LightGBMLSS now supports automatic derivation of Gradients and Hessians. <br/> -->
+:boom: [2022-01-04] LightGBMLSS is initialized with suitable starting values to improve convergence of estimation. <br/>
 :boom: [2022-01-04] LightGBMLSS v0.1.0 is released!
 
 ## Features
 :white_check_mark: Simultaneous updating of all distributional parameters. <br/>
+<!-- :white_check_mark: Automatic derivation of Gradients and Hessian of all distributional parameters using [PyTorch](https://pytorch.org/docs/stable/autograd.html). <br/> -->
 :white_check_mark: Automated hyper-parameter search, including pruning, is done via [Optuna](https://optuna.org/). <br/>
 :white_check_mark: The output of LightGBMLSS is explained using [SHapley Additive exPlanations](https://github.com/slundberg/shap). <br/>
 :white_check_mark: LightGBMLSS is available in Python. <br/>
@@ -41,4 +47,4 @@ $ pip install git+https://github.com/StatMixedML/LightGBMLSS.git
 We refer to the [examples section](https://github.com/StatMixedML/LightGBMLSS/tree/master/examples) for example notebooks.
 
 ## Reference Paper
-März, Alexander (2019) [*"XGBoostLSS - An extension of XGBoost to probabilistic forecasting"*](https://arxiv.org/abs/1907.03178). 
+März, Alexander (2019) [*"XGBoostLSS - An extension of XGBoost to probabilistic forecasting"*](https://arxiv.org/abs/1907.03178).
