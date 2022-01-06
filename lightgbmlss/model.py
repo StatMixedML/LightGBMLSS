@@ -385,7 +385,7 @@ class lightgbmlss:
         '''
 
         dict_param = dist.param_dict()
-        predt = booster.predict(dtest, predict_raw_score=True)
+        predt = booster.predict(dtest, raw_score=True)
 
         # Set init_score as starting point for each distributional parameter.
         init_score_pred = (np.ones(shape=(dtest.shape[0], 1))) * dist.start_values
