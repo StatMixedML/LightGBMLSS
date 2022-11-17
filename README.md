@@ -47,4 +47,5 @@ $ pip install git+https://github.com/StatMixedML/LightGBMLSS.git
 We refer to the [examples section](https://github.com/StatMixedML/LightGBMLSS/tree/master/examples) for example notebooks.
 
 ## Reference Paper
+März, A. and Kneib, T. (2022) [*"Distributional Gradient Boosting Machines"*](https://arxiv.org/abs/2204.00778). <br/>
 März, Alexander (2019) [*"XGBoostLSS - An extension of XGBoost to probabilistic forecasting"*](https://arxiv.org/abs/1907.03178).
