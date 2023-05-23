@@ -9,7 +9,7 @@ We propose a new framework of LightGBM that predicts the entire conditional dist
 :white_check_mark: Automatic derivation of Gradients and Hessian of all distributional parameters using [PyTorch](https://pytorch.org/docs/stable/autograd.html). <br/>
 :white_check_mark: Automated hyper-parameter search, including pruning, is done via [Optuna](https://optuna.org/). <br/>
 :white_check_mark: The output of LightGBMLSS is explained using [SHapley Additive exPlanations](https://github.com/dsgibbons/shap). <br/>
-:white_check_mark: LightGBMLSS provides full compatibility with all the features and functionality of XGBoost. <br/>
+:white_check_mark: LightGBMLSS provides full compatibility with all the features and functionality of LightGBM. <br/>
 :white_check_mark: LightGBMLSS is available in Python. <br/>
 
 ## News
