@@ -54,7 +54,7 @@ Since LightGBMLSS updates the parameter estimates by optimizing Gradients and He
 For improved convergence, an alternative approach is to standardize the (continuous) response variable, such as dividing it by 100 (e.g., y/100). This approach proves especially valuable when the response range significantly differs from that of Gradients and Hessians. Nevertheless, it is essential to carefully evaluate and apply both the built-in stabilization and response standardization techniques in consideration of the specific dataset at hand.
 
 ### Runtime
-Since LightGBMLSS updates all distributional parameters simultaneously, it requires training ```[number of iterations] * [number of distributional parameters]``` trees. Hence, the runtime of LightGBMLSS is generally slightly higher as compared to XGBoost, which requires training ```[number of iterations]``` trees only. 
+Since LightGBMLSS updates all distributional parameters simultaneously, it requires training ```[number of iterations] * [number of distributional parameters]``` trees. Hence, the runtime of LightGBMLSS is generally slightly higher as compared to LightGBM, which requires training ```[number of iterations]``` trees only. 
 
 
 ## Reference Paper
