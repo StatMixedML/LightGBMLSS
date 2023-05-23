@@ -451,7 +451,7 @@ class LightGBMLSS:
              parameter: str = "loc",
              plot_type: str = "Partial_Dependence"):
         """
-        XGBoostLSS SHap plotting function.
+        LightGBMLSS SHap plotting function.
 
         Arguments:
         ---------
@@ -489,7 +489,7 @@ class LightGBMLSS:
                        expectile: str = "0.05",
                        plot_type: str = "Partial_Dependence"):
         """
-        XGBoostLSS function for plotting expectile SHapley values.
+        LightGBMLSS function for plotting expectile SHapley values.
 
         X: pd.DataFrame
             Train/Test Data
