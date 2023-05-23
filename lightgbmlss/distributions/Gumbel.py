@@ -1,22 +1,22 @@
-from torch.distributions import Normal as Gaussian_Torch
+from torch.distributions import Gumbel as Gumbel_Torch
 from lightgbmlss.utils import *
 from .distribution_utils import *
 
 
-class Gaussian:
+class Gumbel:
     """
-    Gaussian distribution class.
+    Gumbel distribution class.
 
     Distributional Parameters
     -------------------------
     loc: torch.Tensor
-        Mean of the distribution (often referred to as mu).
+        Location parameter of the distribution.
     scale: torch.Tensor
-        Standard deviation of the distribution (often referred to as sigma).
+        Scale parameter of the distribution.
 
     Source
     -------------------------
-    https://pytorch.org/docs/stable/distributions.html#normal
+    https://pytorch.org/docs/stable/distributions.html#gumbel
 
     Parameters
     -------------------------
@@ -46,7 +46,7 @@ class Gaussian:
         distribution_arg_names = list(param_dict.keys())
 
         # Specify Distribution
-        self.dist_class = DistributionClass(distribution=Gaussian_Torch,
+        self.dist_class = DistributionClass(distribution=Gumbel_Torch,
                                             univariate=True,
                                             discrete=False,
                                             n_dist_param=len(param_dict),

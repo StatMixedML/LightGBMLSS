@@ -1,43 +1,78 @@
 import pandas as pd
+import numpy as np
+import collections
+import copy
+import json
+from operator import attrgetter
+from pathlib import Path
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
+
+
 import lightgbm as lgb
-from lightgbmlss.distributions import *
 from lightgbmlss.utils import *
 import optuna
 from optuna.samplers import TPESampler
 from optuna.integration import LightGBMPruningCallback
 import shap
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-from pathlib import Path
+
+from lightgbm.engine import CVBooster
+from lightgbm.basic import (Booster, Dataset)
+
+from sklearn.model_selection import BaseCrossValidator, GroupKFold, StratifiedKFold
+from lightgbm.compat import SKLEARN_INSTALLED, _LGBMGroupKFold, _LGBMStratifiedKFold
+
+_LGBM_EvalFunctionResultType = Tuple[str, float, bool]
+_LGBM_BoosterBestScoreType = Dict[str, Dict[str, float]]
+_LGBM_BoosterEvalMethodResultType = Tuple[str, str, float, bool]
+_LGBM_CategoricalFeatureConfiguration = Union[List[str], List[int], "Literal['auto']"]
+_LGBM_FeatureNameConfiguration = Union[List[str], "Literal['auto']"]
+_LGBMBaseCrossValidator = BaseCrossValidator
+
+_LGBM_CustomMetricFunction = Union[
+    Callable[
+        [np.ndarray, Dataset],
+        _LGBM_EvalFunctionResultType,
+    ],
+    Callable[
+        [np.ndarray, Dataset],
+        List[_LGBM_EvalFunctionResultType]
+    ],
+]
+
+_LGBM_PreprocFunction = Callable[
+    [Dataset, Dataset, Dict[str, Any]],
+    Tuple[Dataset, Dataset, Dict[str, Any]]
+]
 
 
-class lightgbmlss:
+class LightGBMLSS:
     """
     LightGBMLSS model class
-
     """
+    def __init__(self, dist):
+        self.dist = dist.dist_class  # Distribution object
 
-    def train(params: Dict[str, Any],
-              dtrain: lgb.Dataset,
-              dist,
+    def train(self,
+              params: Dict[str, Any],
+              train_set: Dataset,
               num_boost_round: int = 100,
-              valid_sets: Optional[List[lgb.Dataset]] = None,
+              valid_sets: Optional[List[Dataset]] = None,
               valid_names: Optional[List[str]] = None,
-              init_model: Optional[Union[str, Path, lgb.Booster]] = None,
-              feature_name: Union[List[str], str] = 'auto',
-              categorical_feature: Union[List[str], List[int], str] = 'auto',
+              init_model: Optional[Union[str, Path, Booster]] = None,
+              feature_name: _LGBM_FeatureNameConfiguration = 'auto',
+              categorical_feature: _LGBM_CategoricalFeatureConfiguration = 'auto',
               keep_training_booster: bool = False,
-              callbacks: Optional[List[Callable]] = None) -> lgb.Booster:
-
-        """Train a LightGBMLSS model with given parameters.
+              callbacks: Optional[List[Callable]] = None
+              ) -> Booster:
+        """Function to perform the training of a LightGBMLSS model with given parameters.
 
         Parameters
         ----------
         params : dict
-            Parameters for training.
-        dtrain : Dataset
+            Parameters for training. Values passed through ``params`` take precedence over those
+            supplied via arguments.
+        train_set : Dataset
             Data to be trained on.
-        dist: lightgbmlss.distributions class.
-            Specifies distributional assumption.
         num_boost_round : int, optional (default=100)
             Number of boosting iterations.
         valid_sets : list of Dataset, or None, optional (default=None)
@@ -54,10 +89,11 @@ class lightgbmlss:
             If list of int, interpreted as indices.
             If list of str, interpreted as feature names (need to specify ``feature_name`` as well).
             If 'auto' and data is pandas DataFrame, pandas unordered categorical columns are used.
-            All values in categorical features should be less than int32 max value (2147483647).
+            All values in categorical features will be cast to int32 and thus should be less than int32 max value (2147483647).
             Large values could be memory consuming. Consider using consecutive integers starting from zero.
             All negative values in categorical features will be treated as missing values.
             The output cannot be monotonically constrained with respect to a categorical feature.
+            Floating point numbers in categorical features will be rounded towards 0.
         keep_training_booster : bool, optional (default=False)
             Whether the returned Booster will be used to keep training.
             If False, the returned value will be converted into _InnerPredictor before returning.
@@ -75,7 +111,7 @@ class lightgbmlss:
             The trained Booster model.
         """
 
-        params_adj = {"num_class": dist.n_dist_param(),
+        params_adj = {"num_class": self.dist.n_dist_param,
                       "metric": "None",
                       "objective": "None",
                       "random_seed": 123,
@@ -84,53 +120,50 @@ class lightgbmlss:
         params.update(params_adj)
 
         # Set init_score as starting point for each distributional parameter.
-        dist.start_values = dist.initialize(dtrain.get_label())
-        init_score = (np.ones(shape=(dtrain.get_label().shape[0], 1))) * dist.start_values
-        dtrain.set_init_score(init_score.ravel(order="F"))
+        _, self.start_values = self.dist.calculate_start_values(train_set.get_label())
+        init_score = (np.ones(shape=(train_set.get_label().shape[0], 1))) * self.start_values
+        train_set.set_init_score(init_score.ravel(order="F"))
 
-        bstLSS_train = lgb.train(params,
-                                 dtrain,
+        self.booster = lgb.train(params,
+                                 train_set,
                                  num_boost_round=num_boost_round,
-                                 fobj=dist.Dist_Objective,
-                                 feval=dist.Dist_Metric,
-                                 valid_sets = valid_sets,
+                                 fobj=self.dist.objective_fn,
+                                 feval=self.dist.metric_fn,
+                                 valid_sets=valid_sets,
                                  valid_names=valid_names,
                                  init_model=init_model,
                                  feature_name=feature_name,
                                  categorical_feature=categorical_feature,
                                  keep_training_booster=keep_training_booster,
                                  callbacks=callbacks)
-        return bstLSS_train
+        return self.booster
 
-
-    def cv(params,
-           dtrain,
-           dist,
-           num_boost_round=100,
-           folds=None,
-           nfold=10,
-           stratified=False,
-           shuffle=False,
-           metrics=None,
-           init_model=None,
-           feature_name='auto',
-           categorical_feature='auto',
-           fpreproc=None,
-           seed=123,
-           callbacks=None,
-           eval_train_metric=False,
-           return_cvbooster=False):
-
+    def cv(self,
+           params: Dict[str, Any],
+           train_set: Dataset,
+           num_boost_round: int = 100,
+           folds: Optional[Union[Iterable[Tuple[np.ndarray, np.ndarray]], _LGBMBaseCrossValidator]] = None,
+           nfold: int = 5,
+           stratified: bool = True,
+           shuffle: bool = True,
+           init_model: Optional[Union[str, Path, Booster]] = None,
+           feature_name: _LGBM_FeatureNameConfiguration = 'auto',
+           categorical_feature: _LGBM_CategoricalFeatureConfiguration = 'auto',
+           fpreproc: Optional[_LGBM_PreprocFunction] = None,
+           seed: int = 123,
+           callbacks: Optional[List[Callable]] = None,
+           eval_train_metric: bool = False,
+           return_cvbooster: bool = False
+           ) -> Dict[str, Union[List[float], CVBooster]]:
         """Function to cross-validate a LightGBMLSS model with given parameters.
 
         Parameters
         ----------
         params : dict
-            Parameters for Booster.
-        dtrain : Dataset
+            Parameters for training. Values passed through ``params`` take precedence over those
+            supplied via arguments.
+        train_set : Dataset
             Data to be trained on.
-        dist: lightgbm.distributions class
-            Specifies distributional assumption.
         num_boost_round : int, optional (default=100)
             Number of boosting iterations.
         folds : generator or iterator of (train_idx, test_idx) tuples, scikit-learn splitter object or None, optional (default=None)
@@ -145,9 +178,6 @@ class lightgbmlss:
             Whether to perform stratified sampling.
         shuffle : bool, optional (default=True)
             Whether to shuffle before splitting data.
-        metrics : str, list of str, or None, optional (default=None)
-            Evaluation metrics to be monitored while CV.
-            If not None, the metric in ``params`` will be overridden.
         init_model : str, pathlib.Path, Booster or None, optional (default=None)
             Filename of LightGBM model or Booster instance used for continue training.
         feature_name : list of str, or 'auto', optional (default="auto")
@@ -158,10 +188,11 @@ class lightgbmlss:
             If list of int, interpreted as indices.
             If list of str, interpreted as feature names (need to specify ``feature_name`` as well).
             If 'auto' and data is pandas DataFrame, pandas unordered categorical columns are used.
-            All values in categorical features should be less than int32 max value (2147483647).
+            All values in categorical features will be cast to int32 and thus should be less than int32 max value (2147483647).
             Large values could be memory consuming. Consider using consecutive integers starting from zero.
             All negative values in categorical features will be treated as missing values.
             The output cannot be monotonically constrained with respect to a categorical feature.
+            Floating point numbers in categorical features will be rounded towards 0.
         fpreproc : callable or None, optional (default=None)
             Preprocessing function that takes (dtrain, dtest, params)
             and returns transformed versions of those.
@@ -184,10 +215,10 @@ class lightgbmlss:
             {'metric1-mean': [values], 'metric1-stdv': [values],
             'metric2-mean': [values], 'metric2-stdv': [values],
             ...}.
-            If ``return_cvbooster=True``, also returns trained boosters via ``cvbooster`` key.
+            If ``return_cvbooster=True``, also returns trained boosters wrapped in a ``CVBooster`` object via ``cvbooster`` key.
         """
 
-        params_adj = {"num_class": dist.n_dist_param(),
+        params_adj = {"num_class": self.dist.n_dist_param,
                       "metric": "None",
                       "objective": "None",
                       "random_seed": 123,
@@ -196,14 +227,14 @@ class lightgbmlss:
         params.update(params_adj)
 
         # Set init_score as starting point for each distributional parameter.
-        dist.start_values = dist.initialize(dtrain.get_label())
-        init_score = (np.ones(shape=(dtrain.get_label().shape[0], 1))) * dist.start_values
-        dtrain.set_init_score(init_score.ravel(order="F"))
+        _, self.start_values = self.dist.calculate_start_values(train_set.get_label())
+        init_score = (np.ones(shape=(train_set.get_label().shape[0], 1))) * self.start_values
+        train_set.set_init_score(init_score.ravel(order="F"))
 
         bstLSS_cv = lgb.cv(params,
-                           dtrain,
-                           fobj=dist.Dist_Objective,
-                           feval=dist.Dist_Metric,
+                           train_set,
+                           fobj=self.dist.objective_fn,
+                           feval=self.dist.metric_fn,
                            num_boost_round=num_boost_round,
                            folds=folds,
                            nfold=nfold,
@@ -221,23 +252,32 @@ class lightgbmlss:
 
         return bstLSS_cv
 
+    def hyper_opt(
+            self,
+            hp_dict: Dict,
+            train_set: lgb.Dataset,
+            num_boost_round=500,
+            nfold=10,
+            early_stopping_rounds=20,
+            max_minutes=10,
+            n_trials=None,
+            study_name=None,
+            silence=False,
+            seed=None,
+            hp_seed=None
+    ):
+        """
+        Function to tune hyperparameters using optuna.
 
-
-    def hyper_opt(params, dtrain, dist, num_boost_round=500, nfold=10, early_stopping_rounds=20,
-                  max_minutes=10, n_trials = None, study_name = "LightGBMLSS-HyperOpt", silence=False):
-        """Function to tune hyperparameters using optuna.
-
-        Parameters
+        Arguments
         ----------
-        params : dict
-            Booster params in the form of "params_name": [min_val, max_val].
-        dtrain : Dataset
-            Data to be trained on.
-        dist: lightgbmlss.distributions class
-            Specifies distributional assumption.
-        num_boost_round : int
+        hp_dict: dict
+            Dictionary of hyperparameters to tune.
+        train_set: lgb.Dataset
+            Training data.
+        num_boost_round: int
             Number of boosting iterations.
-        nfold : int
+        nfold: int
             Number of folds in CV.
         early_stopping_rounds: int
             Activates early stopping. Cross-Validation metric (average of validation
@@ -246,84 +286,79 @@ class lightgbmlss:
             The last entry in the evaluation history will represent the best iteration.
             If there's more than one metric in the **eval_metric** parameter given in
             **params**, the last metric will be used for early stopping.
-        max_minutes : int
+        max_minutes: int
             Time budget in minutes, i.e., stop study after the given number of minutes.
-        n_trials : int
+        n_trials: int
             The number of trials. If this argument is set to None, there is no limitation on the number of trials.
-        study_name : str
+        study_name: str
             Name of the hyperparameter study.
-        silence : bool
+        silence: bool
             Controls the verbosity of the trail, i.e., user can silence the outputs of the trail.
+        seed: int
+            Seed used to generate the folds (passed to numpy.random.seed).
+        hp_seed: int
+            Seed for random number generator used in the Bayesian hyper-parameter search.
 
         Returns
         -------
-        opt_params : Dict() with optimal parameters.
+        opt_params : dict
+            Optimal hyper-parameters.
         """
 
         def objective(trial):
 
-            hyper_params = {
-                "boosting": "gbdt",
+            hyper_params = {}
 
-                "eta": trial.suggest_loguniform("eta",
-                                                params["eta"][0],
-                                                params["eta"][1]),
+            for param_name, param_value in hp_dict.items():
 
-                "max_depth": trial.suggest_int("max_depth",
-                                               params["max_depth"][0],
-                                               params["max_depth"][1]),
+                param_type = param_value[0]
 
-                "num_leaves": trial.suggest_int("num_leaves",
-                                                params["num_leaves"][0],
-                                                params["num_leaves"][1],
-                                                step=16),
+                if param_type == "categorical" or param_type == "none":
+                    hyper_params.update({param_name: trial.suggest_categorical(param_name, param_value[1])})
 
-                "min_data_in_leaf": trial.suggest_int("min_data_in_leaf",
-                                                      params["min_data_in_leaf"][0],
-                                                      params["min_data_in_leaf"][1],
-                                                      step=100),
+                elif param_type == "float":
+                    param_constraints = param_value[1]
+                    param_low = param_constraints["low"]
+                    param_high = param_constraints["high"]
+                    param_log = param_constraints["log"]
+                    hyper_params.update(
+                        {param_name: trial.suggest_float(param_name,
+                                                         low=param_low,
+                                                         high=param_high,
+                                                         log=param_log
+                                                         )
+                         })
 
-                "lambda_l1": trial.suggest_int("lambda_l1",
-                                               params["lambda_l1"][0],
-                                               params["lambda_l1"][1],
-                                               step=1),
+                elif param_type == "int":
+                    param_constraints = param_value[1]
+                    param_low = param_constraints["low"]
+                    param_high = param_constraints["high"]
+                    param_log = param_constraints["log"]
+                    hyper_params.update(
+                        {param_name: trial.suggest_int(param_name,
+                                                       low=param_low,
+                                                       high=param_high,
+                                                       log=param_log
+                                                       )
+                         })
 
-                "lambda_l2": trial.suggest_int("lambda_l2",
-                                               params["lambda_l2"][0],
-                                               params["lambda_l2"][1],
-                                               step=1),
-
-                "min_gain_to_split": trial.suggest_loguniform("min_gain_to_split",
-                                                              params["min_gain_to_split"][0],
-                                                              params["min_gain_to_split"][1]),
-
-                "min_sum_hessian_in_leaf": trial.suggest_int("min_sum_hessian_in_leaf",
-                                                             params["min_sum_hessian_in_leaf"][0],
-                                                             params["min_sum_hessian_in_leaf"][1]),
-
-                "subsample": trial.suggest_float("subsample",
-                                                 params["subsample"][0],
-                                                 params["subsample"][1]),
-
-                "feature_fraction": trial.suggest_float("feature_fraction",
-                                                        params["feature_fraction"][0],
-                                                        params["feature_fraction"][1])
-            }
-
+            # Add booster if not included in dictionary
+            if "boosting" not in hyper_params.keys():
+                hyper_params.update({"boosting": trial.suggest_categorical("boosting", ["gbdt"])})
 
             # Add pruning and early stopping
             pruning_callback = LightGBMPruningCallback(trial, "NegLogLikelihood")
             early_stopping_callback = lgb.early_stopping(stopping_rounds=early_stopping_rounds, verbose=False)
 
-            lgblss_param_tuning = lightgbmlss.cv(hyper_params,
-                                                 dtrain,
-                                                 dist,
-                                                 num_boost_round=num_boost_round,
-                                                 nfold=nfold,
-                                                 callbacks=[pruning_callback, early_stopping_callback]
-                                                 )
+            lgblss_param_tuning = self.cv(hyper_params,
+                                          train_set,
+                                          num_boost_round=num_boost_round,
+                                          nfold=nfold,
+                                          callbacks=[pruning_callback, early_stopping_callback],
+                                          seed=seed,
+                                          )
 
-            # Add opt_rounds as a trial attribute, accessible via study.trials_dataframe(). # https://github.com/optuna/optuna/issues/1169
+            # Extract the optimal number of boosting rounds
             opt_rounds = np.argmin(np.array(lgblss_param_tuning["NegLogLikelihood-mean"])) + 1
             trial.set_user_attr("opt_round", int(opt_rounds))
 
@@ -332,18 +367,24 @@ class lightgbmlss:
 
             return best_score
 
+        if study_name is None:
+            study_name = "LightGBMLSS Hyper-Parameter Optimization"
 
         if silence:
             optuna.logging.set_verbosity(optuna.logging.WARNING)
 
-        sampler = TPESampler(seed=123)
+        if hp_seed is not None:
+            sampler = TPESampler(seed=hp_seed)
+        else:
+            sampler = TPESampler()
+
         pruner = optuna.pruners.MedianPruner(n_startup_trials=10, n_warmup_steps=20)
         study = optuna.create_study(sampler=sampler, pruner=pruner, direction="minimize", study_name=study_name)
         study.optimize(objective, n_trials=n_trials, timeout=60 * max_minutes, show_progress_bar=True)
 
-        print("Hyper-Parameter Optimization successfully finished.")
-        print("Number of finished trials: ", len(study.trials))
-        print("Best trial:")
+        print("\nHyper-Parameter Optimization successfully finished.")
+        print("  Number of finished trials: ", len(study.trials))
+        print("  Best trial:")
         opt_param = study.best_trial
 
         # Add optimal stopping round
@@ -351,138 +392,123 @@ class lightgbmlss:
             study.trials_dataframe()["value"].idxmin()]
         opt_param.params["opt_rounds"] = int(opt_param.params["opt_rounds"])
 
-        print("  Value: {}".format(opt_param.value))
-        print("  Params: ")
+        print("    Value: {}".format(opt_param.value))
+        print("    Params: ")
         for key, value in opt_param.params.items():
             print("    {}: {}".format(key, value))
 
         return opt_param.params
 
+    def predict(self,
+                test_set: pd.DataFrame,
+                pred_type: str = "parameters",
+                n_samples: int = 1000,
+                quantiles: list = [0.1, 0.5, 0.9],
+                seed: str = 123):
+        """
+        Function that predicts from the trained model.
 
-    def predict(booster: lgb.Booster, dtest: pd.DataFrame, dist: str, pred_type: str,
-                n_samples: int = 1000, quantiles: list = [0.1, 0.5, 0.9], seed: str = 123):
-        '''A customized lightgbmlss prediction function.
+        Arguments
+        ---------
+        test_set : pd.DataFrame
+            Test data.
+        pred_type : str
+            Type of prediction:
+            - "samples" draws n_samples from the predicted distribution.
+            - "quantile" calculates the quantiles from the predicted distribution.
+            - "parameters" returns the predicted distributional parameters.
+            - "expectiles" returns the predicted expectiles.
+        n_samples : int
+            Number of samples to draw from the predicted distribution.
+        quantiles : List[float]
+            List of quantiles to calculate from the predicted distribution.
+        seed : int
+            Seed for random number generator used to draw samples from the predicted distribution.
 
-        booster: lgb.Booster
-            Trained LightGBMLSS-Model
-        X: pd.DataFrame
-            Test Data
-        dist: str
-            Specifies the distributional assumption.
-        pred_type: str
-            Specifies what is to be predicted:
-                "response" draws n_samples from the predicted response distribution.
-                "quantile" calculates the quantiles from the predicted response distribution.
-                "parameters" returns the predicted distributional parameters.
-                "expectiles" returns the predicted expectiles.
-        n_samples: int
-            If pred_type="response" specifies how many samples are drawn from the predicted response distribution.
-        quantiles: list
-            If pred_type="quantiles" calculates the quantiles from the predicted response distribution.
-        seed: int
-            If pred_type="response" specifies the seed for drawing samples from the predicted response distribution.
-
-        '''
-
-        dict_param = dist.param_dict()
-        predt = booster.predict(dtest, raw_score=True)
+        Returns
+        -------
+        predt_df : pd.DataFrame
+            Predictions.
+        """
 
         # Set init_score as starting point for each distributional parameter.
-        init_score_pred = (np.ones(shape=(dtest.shape[0], 1))) * dist.start_values
+        init_score_pred = (np.ones(shape=(test_set.shape[0], 1))) * self.start_values
 
-        dist_params_predts = []
+        # Predict
+        predt_df = self.dist.predict_dist(self.booster,
+                                          test_set,
+                                          init_score_pred,
+                                          pred_type,
+                                          n_samples,
+                                          quantiles,
+                                          seed)
 
-        # The prediction result doesn't include the init_score specified in creating the train data.
-        # Hence, it needs to be added manually with the corresponding transform for each distributional parameter.
-        for i, (dist_param, response_fun) in enumerate(dict_param.items()):
-            dist_params_predts.append(response_fun(predt[:, i] + init_score_pred[:, i]))
+        return predt_df
 
-        dist_params_df = pd.DataFrame(dist_params_predts).T
-        dist_params_df.columns = dict_param.keys()
+    def plot(self,
+             X: pd.DataFrame,
+             feature: str = "x",
+             parameter: str = "loc",
+             plot_type: str = "Partial_Dependence"):
+        """
+        XGBoostLSS SHap plotting function.
 
-        if pred_type == "parameters":
-            return dist_params_df
-
-        elif pred_type == "expectiles":
-            return dist_params_df
-
-        elif pred_type == "response":
-            pred_resp_df = dist.pred_dist_rvs(pred_params=dist_params_df,
-                                              n_samples=n_samples,
-                                              seed=seed)
-
-            pred_resp_df.columns = [str("y_pred_sample_") + str(i) for i in range(pred_resp_df.shape[1])]
-            return pred_resp_df
-
-        elif pred_type == "quantiles":
-            pred_quant_df = dist.pred_dist_quantile(quantiles=quantiles,
-                                                    pred_params=dist_params_df)
-
-            pred_quant_df.columns = [str("quant_") + str(quantiles[i]) for i in range(len(quantiles))]
-            return pred_quant_df
-
-
-    def plot(booster: lgb.Booster, X: pd.DataFrame, feature: str = "x", parameter: str = "location", plot_type: str = "Partial_Dependence"):
-        '''A customized LightGBMLSS plotting function.
-
-        booster: lgb.Booster
-            Trained lightgbmlss-Model
+        Arguments:
+        ---------
         X: pd.DataFrame
             Train/Test Data
         feature: str
-            Specifies which feature to use for plotting Partial_Dependence plot.
+            Specifies which feature is to be plotted.
         parameter: str
-            Specifies which distributional parameter to plot. Valid parameters are "location", "scale", "nu", "tau".
+            Specifies which parameter is to be plotted. Valid parameters are "location", "scale", "df", "tau".
         plot_type: str
-            Specifies which SHapley-plot to visualize. Currently "Partial_Dependence" and "Feature_Importance" are supported.
-
-        '''
-
+            Specifies the type of plot:
+                "Partial_Dependence" plots the partial dependence of the parameter on the feature.
+                "Feature_Importance" plots the feature importance of the parameter.
+        """
         shap.initjs()
-        explainer = shap.TreeExplainer(booster)
+        explainer = shap.TreeExplainer(self.booster)
         shap_values = explainer(X)
 
-        if parameter == "location":
-            param_pos = 0
-        if parameter == "scale":
-            param_pos = 1
-        if parameter == "nu":
-            param_pos = 2
-        if parameter == "tau":
-            param_pos = 3
+        param_pos = list(self.dist.param_dict.keys()).index(parameter)
 
         if plot_type == "Partial_Dependence":
-            shap.plots.scatter(shap_values[:, feature][:, param_pos], color=shap_values[:, :, param_pos])
+            if self.dist.n_dist_param == 1:
+                shap.plots.scatter(shap_values[:, feature], color=shap_values[:, feature])
+            else:
+                shap.plots.scatter(shap_values[:, feature][:, param_pos], color=shap_values[:, feature][:, param_pos])
         elif plot_type == "Feature_Importance":
-            shap.plots.bar(shap_values[:, :, param_pos], max_display = 15 if X.shape[1] > 15 else X.shape[1])
+            if self.dist.n_dist_param == 1:
+                shap.plots.bar(shap_values, max_display=15 if X.shape[1] > 15 else X.shape[1])
+            else:
+                shap.plots.bar(shap_values[:, :, param_pos], max_display=15 if X.shape[1] > 15 else X.shape[1])
 
+    def expectile_plot(self,
+                       X: pd.DataFrame,
+                       feature: str = "x",
+                       expectile: str = "0.05",
+                       plot_type: str = "Partial_Dependence"):
+        """
+        XGBoostLSS function for plotting expectile SHapley values.
 
-
-    def expectile_plot(booster: lgb.Booster, X: pd.DataFrame, dist, feature: str = "x", expectile: str = "0.05", plot_type: str = "Partial_Dependence"):
-        '''A customized LightGBMLSS plotting function.
-
-        booster: lgb.Booster
-            Trained lightgbmlss-Model
         X: pd.DataFrame
             Train/Test Data
-        dist: lightgbmlss.distributions class
-            Specifies distributional assumption
         feature: str
             Specifies which feature to use for plotting Partial_Dependence plot.
         expectile: str
             Specifies which expectile to plot.
         plot_type: str
-            Specifies which SHapley-plot to visualize. Currently "Partial_Dependence" and "Feature_Importance" are supported.
-
-        '''
+            Specifies which SHapley-plot to visualize. Currently, "Partial_Dependence" and "Feature_Importance"
+            are supported.
+        """
 
         shap.initjs()
-        explainer = shap.TreeExplainer(booster)
+        explainer = shap.TreeExplainer(self.booster)
         shap_values = explainer(X)
 
-        expect_pos = dist.expectiles.index(float(expectile))
+        expect_pos = list(self.dist.param_dict.keys()).index(expectile)
 
         if plot_type == "Partial_Dependence":
-            shap.plots.scatter(shap_values[:, feature][:, expect_pos], color=shap_values[:, :, expect_pos])
+            shap.plots.scatter(shap_values[:, feature][:, expect_pos], color=shap_values[:, feature][:, expect_pos])
         elif plot_type == "Feature_Importance":
-            shap.plots.bar(shap_values[:, :, expect_pos], max_display = 15 if X.shape[1] > 15 else X.shape[1])
+            shap.plots.bar(shap_values[:, :, expect_pos], max_display=15 if X.shape[1] > 15 else X.shape[1])

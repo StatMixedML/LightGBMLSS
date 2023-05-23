@@ -1,22 +1,22 @@
-from torch.distributions import Normal as Gaussian_Torch
+from torch.distributions import Laplace as Laplace_Torch
 from lightgbmlss.utils import *
 from .distribution_utils import *
 
 
-class Gaussian:
+class Laplace:
     """
-    Gaussian distribution class.
+    Laplace distribution class.
 
     Distributional Parameters
     -------------------------
     loc: torch.Tensor
-        Mean of the distribution (often referred to as mu).
+        Mean of the distribution.
     scale: torch.Tensor
-        Standard deviation of the distribution (often referred to as sigma).
+        Scale of the distribution.
 
     Source
     -------------------------
-    https://pytorch.org/docs/stable/distributions.html#normal
+    https://pytorch.org/docs/stable/distributions.html#laplace
 
     Parameters
     -------------------------
@@ -46,7 +46,7 @@ class Gaussian:
         distribution_arg_names = list(param_dict.keys())
 
         # Specify Distribution
-        self.dist_class = DistributionClass(distribution=Gaussian_Torch,
+        self.dist_class = DistributionClass(distribution=Laplace_Torch,
                                             univariate=True,
                                             discrete=False,
                                             n_dist_param=len(param_dict),

@@ -1,24 +1,24 @@
-from torch.distributions import Normal as Gaussian_Torch
+from torch.distributions import Weibull as Weibull_Torch
 from lightgbmlss.utils import *
 from .distribution_utils import *
 
 
-class Gaussian:
+class Weibull:
     """
-    Gaussian distribution class.
+    Weibull distribution class.
 
     Distributional Parameters
     -------------------------
-    loc: torch.Tensor
-        Mean of the distribution (often referred to as mu).
     scale: torch.Tensor
-        Standard deviation of the distribution (often referred to as sigma).
+        Scale parameter of distribution (lambda).
+    concentration: torch.Tensor
+        Concentration parameter of distribution (k/shape).
 
     Source
     -------------------------
-    https://pytorch.org/docs/stable/distributions.html#normal
+    https://pytorch.org/docs/stable/distributions.html#weibull
 
-    Parameters
+     Parameters
     -------------------------
     stabilization: str
         Stabilization method for the Gradient and Hessian. Options are "None", "MAD", "L2".
@@ -41,12 +41,12 @@ class Gaussian:
             raise ValueError("Invalid response function. Please choose from 'exp' or 'softplus'.")
 
         # Specify Response and Link Functions
-        param_dict = {"loc": identity_fn, "scale": response_fn}
-        param_dict_inv = {"loc": identity_fn, "scale": inverse_response_fn}
+        param_dict = {"scale": response_fn, "concentration": response_fn}
+        param_dict_inv = {"scale": inverse_response_fn, "concentration": inverse_response_fn}
         distribution_arg_names = list(param_dict.keys())
 
         # Specify Distribution
-        self.dist_class = DistributionClass(distribution=Gaussian_Torch,
+        self.dist_class = DistributionClass(distribution=Weibull_Torch,
                                             univariate=True,
                                             discrete=False,
                                             n_dist_param=len(param_dict),

@@ -1,22 +1,22 @@
-from torch.distributions import Normal as Gaussian_Torch
+from torch.distributions import LogNormal as LogNormal_Torch
 from lightgbmlss.utils import *
 from .distribution_utils import *
 
 
-class Gaussian:
+class LogNormal:
     """
-    Gaussian distribution class.
+    LogNormal distribution class.
 
     Distributional Parameters
     -------------------------
     loc: torch.Tensor
-        Mean of the distribution (often referred to as mu).
+        Mean of log of distribution.
     scale: torch.Tensor
-        Standard deviation of the distribution (often referred to as sigma).
+        Standard deviation of log of the distribution.
 
     Source
     -------------------------
-    https://pytorch.org/docs/stable/distributions.html#normal
+    https://pytorch.org/docs/stable/distributions.html#lognormal
 
     Parameters
     -------------------------
@@ -46,7 +46,7 @@ class Gaussian:
         distribution_arg_names = list(param_dict.keys())
 
         # Specify Distribution
-        self.dist_class = DistributionClass(distribution=Gaussian_Torch,
+        self.dist_class = DistributionClass(distribution=LogNormal_Torch,
                                             univariate=True,
                                             discrete=False,
                                             n_dist_param=len(param_dict),
