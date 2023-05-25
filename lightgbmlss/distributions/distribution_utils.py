@@ -385,7 +385,7 @@ class DistributionClass:
         hess = [autograd(grad[i].nansum(), inputs=predt[i], retain_graph=True)[0] for i in range(len(grad))]
 
         # Stabilization of Derivatives
-        if self.stabilization != "None":
+        if stabilization != "None":
             grad = [stabilize_derivative(grad[i], type=stabilization) for i in range(len(grad))]
             hess = [stabilize_derivative(hess[i], type=stabilization) for i in range(len(hess))]
 
