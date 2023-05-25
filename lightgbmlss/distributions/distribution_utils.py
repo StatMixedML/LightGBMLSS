@@ -381,13 +381,13 @@ class DistributionClass:
         """
 
         # Gradient and Hessian
-        grad_list = autograd(nll, inputs=predt, create_graph=True)
-        hess_list = [autograd(grad_list[i].nansum(), inputs=predt[i], retain_graph=True)[0] for i in range(len(grad_list))]
+        grad = autograd(nll, inputs=predt, create_graph=True)
+        hess = [autograd(grad[i].nansum(), inputs=predt[i], retain_graph=True)[0] for i in range(len(grad))]
 
         # Stabilization of Derivatives
         if self.stabilization != "None":
-            grad = [stabilize_derivative(grad_list[i], type=stabilization) for i in range(len(grad_list))]
-            hess = [stabilize_derivative(hess_list[i], type=stabilization) for i in range(len(grad_list))]
+            grad = [stabilize_derivative(grad[i], type=stabilization) for i in range(len(grad))]
+            hess = [stabilize_derivative(hess[i], type=stabilization) for i in range(len(hess))]
 
         # Reshape
         grad = torch.cat(grad, axis=1).detach().numpy()
