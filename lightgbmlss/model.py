@@ -48,9 +48,24 @@ _LGBM_PreprocFunction = Callable[
 class LightGBMLSS:
     """
     LightGBMLSS model class
+
+    Parameters
+    ----------
+    dist : Distribution
+        DistributionClass object.
+     start_values : np.ndarray
+        Starting values for each distributional parameter.
     """
     def __init__(self, dist):
         self.dist = dist.dist_class  # Distribution object
+        self.start_values = None     # Starting values for distributional parameters
+
+    def __getstate__(self):
+        state = self.__dict__.copy()  # Copy the object's state
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)  # Restore the object's state
 
     def train(self,
               params: Dict[str, Any],
@@ -110,7 +125,6 @@ class LightGBMLSS:
         booster : Booster
             The trained Booster model.
         """
-
         params_adj = {"num_class": self.dist.n_dist_param,
                       "metric": "None",
                       "objective": "None",
@@ -120,9 +134,10 @@ class LightGBMLSS:
         params.update(params_adj)
 
         # Set init_score as starting point for each distributional parameter.
-        _, self.start_values = self.dist.calculate_start_values(train_set.get_label())
-        init_score = (np.ones(shape=(train_set.get_label().shape[0], 1))) * self.start_values
-        train_set.set_init_score(init_score.ravel(order="F"))
+        if self.start_values is None:
+            _, self.start_values = self.dist.calculate_start_values(train_set.get_label())
+        init_score_train = (np.ones(shape=(train_set.get_label().shape[0], 1))) * self.start_values
+        train_set.set_init_score(init_score_train.ravel(order="F"))
 
         self.booster = lgb.train(params,
                                  train_set,
@@ -217,7 +232,6 @@ class LightGBMLSS:
             ...}.
             If ``return_cvbooster=True``, also returns trained boosters wrapped in a ``CVBooster`` object via ``cvbooster`` key.
         """
-
         params_adj = {"num_class": self.dist.n_dist_param,
                       "metric": "None",
                       "objective": "None",
@@ -227,9 +241,10 @@ class LightGBMLSS:
         params.update(params_adj)
 
         # Set init_score as starting point for each distributional parameter.
-        _, self.start_values = self.dist.calculate_start_values(train_set.get_label())
-        init_score = (np.ones(shape=(train_set.get_label().shape[0], 1))) * self.start_values
-        train_set.set_init_score(init_score.ravel(order="F"))
+        if self.start_values is None:
+            _, self.start_values = self.dist.calculate_start_values(train_set.get_label())
+        init_score_cv = (np.ones(shape=(train_set.get_label().shape[0], 1))) * self.start_values
+        train_set.set_init_score(init_score_cv.ravel(order="F"))
 
         bstLSS_cv = lgb.cv(params,
                            train_set,
@@ -431,17 +446,14 @@ class LightGBMLSS:
             Predictions.
         """
 
-        # Set init_score as starting point for each distributional parameter.
-        init_score_pred = (np.ones(shape=(test_set.shape[0], 1))) * self.start_values
-
         # Predict
-        predt_df = self.dist.predict_dist(self.booster,
-                                          test_set,
-                                          init_score_pred,
-                                          pred_type,
-                                          n_samples,
-                                          quantiles,
-                                          seed)
+        predt_df = self.dist.predict_dist(booster=self.booster,
+                                          test_set=test_set,
+                                          start_values=self.start_values,
+                                          pred_type=pred_type,
+                                          n_samples=n_samples,
+                                          quantiles=quantiles,
+                                          seed=seed)
 
         return predt_df
 
