@@ -36,7 +36,8 @@ class DistributionClass:
         List of distributional parameter names.
     tau: List
         List of expectiles. Only used for Expectile distributon.
-
+    penalize_crossing: bool
+        Whether to include a penalty term to discourage crossing of expectiles. Only used for Expectile distribution.
     """
     def __init__(self,
                  distribution: torch.distributions.Distribution = None,
@@ -48,6 +49,7 @@ class DistributionClass:
                  param_dict_inv: Dict[str, Any] = None,
                  distribution_arg_names: List = None,
                  tau: Optional[List[torch.Tensor]] = None,
+                 penalize_crossing: bool = False,
                  ):
 
         self.distribution = distribution
@@ -59,6 +61,7 @@ class DistributionClass:
         self.param_dict_inv = param_dict_inv
         self.distribution_arg_names = distribution_arg_names
         self.tau = tau
+        self.penalize_crossing = penalize_crossing
 
     def objective_fn(self, predt: np.ndarray, data: lgb.Dataset) -> Tuple[np.ndarray, np.ndarray]:
 
@@ -81,7 +84,7 @@ class DistributionClass:
         """
 
         # Weights
-        target = data.get_label().reshape(-1,1)
+        target = data.get_label().reshape(-1, 1)
         if data.get_weight() == None:
             # Use 1 as weight if no weights are specified
             weights = np.ones_like(target, dtype=target.dtype)
@@ -135,11 +138,15 @@ class DistributionClass:
             Starting values for each distributional parameter.
         """
         def neg_log_likelihood(params, target):
+            # Transform parameters to response scale
+            params = [
+                response_fn(params[i].reshape(-1, 1)) for i, response_fn in enumerate(self.param_dict.values())
+            ]
             if self.tau is None:
                 dist = self.distribution(*params)
                 nll = -torch.nansum(dist.log_prob(target))
             else:
-                dist = self.distribution(params)
+                dist = self.distribution(params, self.penalize_crossing)
                 nll = -torch.nansum(dist.log_prob(target, self.tau))
             return nll
 
@@ -160,11 +167,7 @@ class DistributionClass:
 
         nll = optimizer.step(closure).detach().numpy()
 
-        # Transform parameters to inverse response scale
-        start_values = np.array(
-            [inv_response_fun(params[i]).detach()
-             for i, (dist_param, inv_response_fun) in enumerate(self.param_dict_inv.items())]
-        )
+        start_values = np.array([params[i].detach() for i in range(self.n_dist_param)])
 
         return nll, start_values
 
@@ -215,8 +218,7 @@ class DistributionClass:
             nll = -torch.nansum(dist_fit.log_prob(target))
         else:
             # Specify Distribution and NLL
-            dist_kwargs = predt_transformed
-            dist_fit = self.distribution(dist_kwargs)
+            dist_fit = self.distribution(predt_transformed, self.penalize_crossing)
             nll = -torch.nansum(dist_fit.log_prob(target, self.tau))
 
         return predt, nll
@@ -264,7 +266,7 @@ class DistributionClass:
     def predict_dist(self,
                      booster: lgb.Booster,
                      test_set: pd.DataFrame,
-                     init_score_pred: np.ndarray,
+                     start_values: np.ndarray,
                      pred_type: str = "parameters",
                      n_samples: int = 1000,
                      quantiles: list = [0.1, 0.5, 0.9],
@@ -279,8 +281,8 @@ class DistributionClass:
             Trained model.
         test_set : pd.DataFrame
             Test data.
-        init_score_pred : np.ndarray
-            Initial scores for prediction.
+        start_values : np.ndarray.
+            Starting values for each distributional parameter.
         pred_type : str
             Type of prediction:
             - "samples" draws n_samples from the predicted distribution.
@@ -302,11 +304,14 @@ class DistributionClass:
 
         predt = torch.tensor(
             booster.predict(test_set, raw_score=True),
-            dtype = torch.float32
+            dtype=torch.float32
         ).reshape(-1, self.n_dist_param)
 
-        init_score_pred = torch.tensor(init_score_pred, dtype=torch.float32)
-
+        # Set init_score as starting point for each distributional parameter.
+        init_score_pred = torch.tensor(
+            np.ones(shape=(test_set.shape[0], 1))*start_values,
+            dtype=torch.float32
+        )
 
         # The prediction result doesn't include the init_score specified in creating the train data.
         # Hence, it needs to be added manually with the corresponding transform for each distributional parameter.
@@ -387,8 +392,8 @@ def compute_gradients_and_hessians(nll: torch.tensor,
     hess = torch.cat(hess, axis=1).detach().numpy()
 
     # Weighting
-    # grad *= weights
-    # hess *= weights
+    grad *= weights
+    hess *= weights
 
     # Reshape
     grad = grad.ravel(order="F")
