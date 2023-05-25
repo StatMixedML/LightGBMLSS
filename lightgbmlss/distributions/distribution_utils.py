@@ -92,7 +92,7 @@ class DistributionClass:
             weights = data.get_weight()
 
         predt, nll = self.get_params_nll(predt, data, requires_grad=True)
-        grad, hess = compute_gradients_and_hessians(nll, predt, weights, self.stabilization)
+        grad, hess = self.compute_gradients_and_hessians(nll, predt, weights, self.stabilization)
 
         return grad, hess
 
@@ -350,56 +350,58 @@ class DistributionClass:
             return pred_quant_df
 
 
-def compute_gradients_and_hessians(nll: torch.tensor,
-                                   predt: torch.tensor,
-                                   weights: np.ndarray,
-                                   stabilization: str) -> Tuple[np.ndarray, np.ndarray]:
+    def compute_gradients_and_hessians(self,
+                                       nll: torch.tensor,
+                                       predt: torch.tensor,
+                                       weights: np.ndarray,
+                                       stabilization: str) -> Tuple[np.ndarray, np.ndarray]:
 
-    """
-    Calculates gradients and hessians.
+        """
+        Calculates gradients and hessians.
 
-    Output gradients and hessians have shape (n_samples, n_outputs).
+        Output gradients and hessians have shape (n_samples, n_outputs).
 
-    Arguments:
-    ---------
-    nll: torch.Tensor
-        Calculated NLL.
-    predt: torch.Tensor
-        List of predicted parameters.
-    weights: np.ndarray
-        Weights.
-    stabilization: str
-        Specifies the type of stabilization for gradients and hessians.
+        Arguments:
+        ---------
+        nll: torch.Tensor
+            Calculated NLL.
+        predt: torch.Tensor
+            List of predicted parameters.
+        weights: np.ndarray
+            Weights.
+        stabilization: str
+            Specifies the type of stabilization for gradients and hessians.
 
-    Returns:
-    -------
-    grad: torch.Tensor
-        Gradients.
-    hess: torch.Tensor
-        Hessians.
-    """
+        Returns:
+        -------
+        grad: torch.Tensor
+            Gradients.
+        hess: torch.Tensor
+            Hessians.
+        """
 
-    # Gradient and Hessian
-    grad_list = autograd(nll, inputs=predt, create_graph=True)
-    hess_list = [autograd(grad_list[i].nansum(), inputs=predt[i], retain_graph=True)[0] for i in range(len(grad_list))]
+        # Gradient and Hessian
+        grad_list = autograd(nll, inputs=predt, create_graph=True)
+        hess_list = [autograd(grad_list[i].nansum(), inputs=predt[i], retain_graph=True)[0] for i in range(len(grad_list))]
 
-    # Stabilization of Derivatives
-    grad = [stabilize_derivative(grad_list[i], type=stabilization) for i in range(len(grad_list))]
-    hess = [stabilize_derivative(hess_list[i], type=stabilization) for i in range(len(grad_list))]
+        # Stabilization of Derivatives
+        if self.stabilization != "None":
+            grad = [stabilize_derivative(grad_list[i], type=stabilization) for i in range(len(grad_list))]
+            hess = [stabilize_derivative(hess_list[i], type=stabilization) for i in range(len(grad_list))]
 
-    # Reshape
-    grad = torch.cat(grad, axis=1).detach().numpy()
-    hess = torch.cat(hess, axis=1).detach().numpy()
+        # Reshape
+        grad = torch.cat(grad, axis=1).detach().numpy()
+        hess = torch.cat(hess, axis=1).detach().numpy()
 
-    # Weighting
-    grad *= weights
-    hess *= weights
+        # Weighting
+        grad *= weights
+        hess *= weights
 
-    # Reshape
-    grad = grad.ravel(order="F")
-    hess = hess.ravel(order="F")
+        # Reshape
+        grad = grad.ravel(order="F")
+        hess = hess.ravel(order="F")
 
-    return grad, hess
+        return grad, hess
 
 
 def stabilize_derivative(input_der: torch.Tensor, type: str = "MAD") -> torch.Tensor:
