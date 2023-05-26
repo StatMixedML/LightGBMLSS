@@ -21,6 +21,9 @@ from lightgbm.basic import (Booster, Dataset)
 from sklearn.model_selection import BaseCrossValidator, GroupKFold, StratifiedKFold
 from lightgbm.compat import SKLEARN_INSTALLED, _LGBMGroupKFold, _LGBMStratifiedKFold
 
+import re
+import pickle
+
 _LGBM_EvalFunctionResultType = Tuple[str, float, bool]
 _LGBM_BoosterBestScoreType = Dict[str, Dict[str, float]]
 _LGBM_BoosterEvalMethodResultType = Tuple[str, str, float, bool]
@@ -138,6 +141,9 @@ class LightGBMLSS:
             _, self.start_values = self.dist.calculate_start_values(train_set.get_label())
         init_score_train = (np.ones(shape=(train_set.get_label().shape[0], 1))) * self.start_values
         train_set.set_init_score(init_score_train.ravel(order="F"))
+
+        if valid_sets is not None:
+            valid_sets = self.set_valid_margin(valid_sets, init_score_train)
 
         self.booster = lgb.train(params,
                                  train_set,
@@ -524,3 +530,67 @@ class LightGBMLSS:
             shap.plots.scatter(shap_values[:, feature][:, expect_pos], color=shap_values[:, feature][:, expect_pos])
         elif plot_type == "Feature_Importance":
             shap.plots.bar(shap_values[:, :, expect_pos], max_display=15 if X.shape[1] > 15 else X.shape[1])
+
+    def set_valid_margin(self,
+                         valid_sets: list,
+                         init_score: np.ndarray
+                         ) -> list:
+        """
+        Function that sets the base margin for the validation set.
+
+        Arguments
+        ---------
+        valid_sets : list
+            List of tuples containing the train and evaluation set.
+        valid_names: list
+            List of tuples containing the name of train and evaluation set.
+        init_score : np.ndarray
+            Initit score.
+
+        Returns
+        -------
+        valid_sets : list
+            List of tuples containing the train and evaluation set.
+        """
+        valid_sets1 = valid_sets[0]
+        valid_sets1.set_init_score(init_score.ravel(order="F"))
+
+        valid_sets2 = valid_sets[1]
+        valid_sets2.set_init_score(init_score.ravel(order="F"))
+
+        valid_sets = [valid_sets1, valid_sets2]
+
+        return valid_sets
+
+    def save_model(self, model_path):
+        """
+        Save the model to a file.
+
+        Parameters
+        ----------
+        model_path : str
+            The path to save the model.
+
+        Returns
+        -------
+        None
+        """
+        with open(model_path, "wb") as f:
+            pickle.dump(self, f)
+
+    @staticmethod
+    def load_model(model_path):
+        """
+        Load the model from a file.
+
+        Parameters
+        ----------
+        model_path : str
+            The path to the saved model.
+
+        Returns
+        -------
+        The loaded model.
+        """
+        with open(model_path, "rb") as f:
+            return pickle.load(f)
