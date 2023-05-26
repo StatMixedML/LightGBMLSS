@@ -13,6 +13,7 @@ We propose a new framework of LightGBM that predicts the entire conditional dist
 :white_check_mark: LightGBMLSS is available in Python. <br/>
 
 ## News
+:boom: [2023-05-26] Release of v0.2.1. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
 :boom: [2023-05-23] Release of v0.2.0. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
 :boom: [2022-01-05] LightGBMLSS now supports estimating the full predictive distribution via [Expectile Regression](https://epub.ub.uni-muenchen.de/31542/1/1471082x14561155.pdf). <br/>
 :boom: [2022-01-05] LightGBMLSS now supports automatic derivation of Gradients and Hessians. <br/>
