@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="lightgbmlss",
-    version="0.2.0",
+    version="0.2.1",
     description="LightGBMLSS - An extension of LightGBM to probabilistic forecasting",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
