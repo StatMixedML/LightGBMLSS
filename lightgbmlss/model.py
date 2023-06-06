@@ -143,7 +143,7 @@ class LightGBMLSS:
         train_set.set_init_score(init_score_train.ravel(order="F"))
 
         if valid_sets is not None:
-            valid_sets = self.set_valid_margin(valid_sets, init_score_train)
+            valid_sets = self.set_valid_margin(valid_sets, self.start_values)
 
         self.booster = lgb.train(params,
                                  train_set,
@@ -533,7 +533,7 @@ class LightGBMLSS:
 
     def set_valid_margin(self,
                          valid_sets: list,
-                         init_score: np.ndarray
+                         start_values: np.ndarray
                          ) -> list:
         """
         Function that sets the base margin for the validation set.
@@ -544,8 +544,8 @@ class LightGBMLSS:
             List of tuples containing the train and evaluation set.
         valid_names: list
             List of tuples containing the name of train and evaluation set.
-        init_score : np.ndarray
-            Initit score.
+        start_values : np.ndarray
+            Array containing the start values for the distributional parameters.
 
         Returns
         -------
@@ -553,10 +553,12 @@ class LightGBMLSS:
             List of tuples containing the train and evaluation set.
         """
         valid_sets1 = valid_sets[0]
-        valid_sets1.set_init_score(init_score.ravel(order="F"))
+        init_score_val1 = (np.ones(shape=(valid_sets1.get_label().shape[0], 1))) * start_values
+        valid_sets1.set_init_score(init_score_val1.ravel(order="F"))
 
         valid_sets2 = valid_sets[1]
-        valid_sets2.set_init_score(init_score.ravel(order="F"))
+        init_score_val2 = (np.ones(shape=(valid_sets2.get_label().shape[0], 1))) * start_values
+        valid_sets2.set_init_score(init_score_val2.ravel(order="F"))
 
         valid_sets = [valid_sets1, valid_sets2]
 
