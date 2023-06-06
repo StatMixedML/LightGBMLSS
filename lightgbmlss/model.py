@@ -252,26 +252,26 @@ class LightGBMLSS:
         init_score_cv = (np.ones(shape=(train_set.get_label().shape[0], 1))) * self.start_values
         train_set.set_init_score(init_score_cv.ravel(order="F"))
 
-        bstLSS_cv = lgb.cv(params,
-                           train_set,
-                           fobj=self.dist.objective_fn,
-                           feval=self.dist.metric_fn,
-                           num_boost_round=num_boost_round,
-                           folds=folds,
-                           nfold=nfold,
-                           stratified=False,
-                           shuffle=False,
-                           metrics=None,
-                           init_model=init_model,
-                           feature_name=feature_name,
-                           categorical_feature=categorical_feature,
-                           fpreproc=fpreproc,
-                           seed=seed,
-                           callbacks=callbacks,
-                           eval_train_metric=eval_train_metric,
-                           return_cvbooster=return_cvbooster)
+        self.bstLSS_cv = lgb.cv(params,
+                                train_set,
+                                fobj=self.dist.objective_fn,
+                                feval=self.dist.metric_fn,
+                                num_boost_round=num_boost_round,
+                                folds=folds,
+                                nfold=nfold,
+                                stratified=False,
+                                shuffle=False,
+                                metrics=None,
+                                init_model=init_model,
+                                feature_name=feature_name,
+                                categorical_feature=categorical_feature,
+                                fpreproc=fpreproc,
+                                seed=seed,
+                                callbacks=callbacks,
+                                eval_train_metric=eval_train_metric,
+                                return_cvbooster=return_cvbooster)
 
-        return bstLSS_cv
+        return self.bstLSS_cv
 
     def hyper_opt(
             self,
