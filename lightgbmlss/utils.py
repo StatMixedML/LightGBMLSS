@@ -33,7 +33,7 @@ def exp_fn(predt: torch.tensor) -> torch.tensor:
         Predicted values.
     """
     predt = torch.exp(predt)
-    predt = torch.nan_to_num(predt, nan=float(torch.nanmean(predt))) + torch.tensor(1e-6, dtype=predt.dtype)
+    predt = torch.nan_to_num(predt, nan=float(torch.nanmean(predt))) + torch.tensor(1e-06, dtype=predt.dtype)
 
     return predt
 
@@ -53,7 +53,7 @@ def log_fn(predt: torch.tensor) -> torch.tensor:
         Predicted values.
     """
     predt = torch.log(predt)
-    predt = torch.nan_to_num(predt, nan=float(torch.nanmean(predt))) + float(1e-6)
+    predt = torch.nan_to_num(predt, nan=float(torch.nanmean(predt))) + float(1e-06)
 
     return predt
 
@@ -73,8 +73,8 @@ def softplus_fn(predt: torch.tensor) -> torch.tensor:
         Predicted values.
     """
     predt = torch.log1p(torch.exp(-torch.abs(predt))) + torch.maximum(predt, torch.tensor(0.))
-    predt[predt == 0] = torch.tensor(1e-6, dtype=predt.dtype)
-    predt = torch.nan_to_num(predt, nan=float(torch.nanmean(predt))) + torch.tensor(1e-6, dtype=predt.dtype)
+    predt[predt == 0] = torch.tensor(1e-06, dtype=predt.dtype)
+    predt = torch.nan_to_num(predt, nan=float(torch.nanmean(predt))) + torch.tensor(1e-06, dtype=predt.dtype)
 
     return predt
 
@@ -94,7 +94,7 @@ def softplusinv_fn(predt: torch.tensor) -> torch.tensor:
         Predicted values.
     """
     predt = predt + torch.log(-torch.expm1(-predt))
-    predt = torch.nan_to_num(predt, nan=float(torch.nanmean(predt))) + torch.tensor(1e-6, dtype=predt.dtype)
+    predt = torch.nan_to_num(predt, nan=float(torch.nanmean(predt))) + torch.tensor(1e-06, dtype=predt.dtype)
 
     return predt
 
@@ -114,10 +114,10 @@ def sigmoid_fn(predt: torch.tensor) -> torch.tensor:
         Predicted values.
     """
     predt = torch.sigmoid(predt)
-    predt = torch.nan_to_num(predt, nan=float(torch.nanmean(predt))) + torch.tensor(1e-6, dtype=predt.dtype)
+    predt = torch.clamp(predt, 1e-06, 1-1e-06)
+    predt = torch.nan_to_num(predt, nan=float(torch.nanmean(predt))) + torch.tensor(1e-06, dtype=predt.dtype)
 
     return predt
-
 
 def sigmoidinv_fn(predt: torch.tensor) -> torch.tensor:
     """
@@ -138,7 +138,6 @@ def sigmoidinv_fn(predt: torch.tensor) -> torch.tensor:
 
     return predt
 
-
 def relu_fn(predt: torch.tensor) -> torch.tensor:
     """
     Function used to ensure predt are scaled to max(0, predt).
@@ -157,7 +156,6 @@ def relu_fn(predt: torch.tensor) -> torch.tensor:
     predt = torch.nan_to_num(predt, nan=float(torch.nanmean(predt))) + torch.tensor(1e-6, dtype=predt.dtype)
 
     return predt
-
 
 def reluinv_fn(predt: torch.tensor) -> torch.tensor:
     """
