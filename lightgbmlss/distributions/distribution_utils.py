@@ -85,11 +85,11 @@ class DistributionClass:
 
         # Weights
         target = data.get_label().reshape(-1, 1)
-        if data.get_weight() == None:
+        if data.get_weight().all() == None:
             # Use 1 as weight if no weights are specified
             weights = np.ones_like(target, dtype=target.dtype)
         else:
-            weights = data.get_weight()
+            weights = data.get_weight().reshape(-1, 1)
 
         predt, nll = self.get_params_nll(predt, data, requires_grad=True)
         grad, hess = self.compute_gradients_and_hessians(nll, predt, weights)
