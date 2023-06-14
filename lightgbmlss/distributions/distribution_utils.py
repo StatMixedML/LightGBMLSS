@@ -85,7 +85,7 @@ class DistributionClass:
 
         # Weights
         target = data.get_label().reshape(-1, 1)
-        if data.get_weight().all() == None:
+        if data.get_weight() is None:
             # Use 1 as weight if no weights are specified
             weights = np.ones_like(target, dtype=target.dtype)
         else:
