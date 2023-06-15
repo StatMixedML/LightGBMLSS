@@ -28,7 +28,7 @@ class NegativeBinomial:
         When a custom objective and metric are provided, LightGBM doesn't know its response and link function. Hence,
         the user is responsible for specifying the transformations. Options are "exp", "softplus" or "relu".
     response_fn_probs: str
-        When a custom objective and metric are provided, XGBoost doesn't know its response and link function. Hence,
+        When a custom objective and metric are provided, LightGBM doesn't know its response and link function. Hence,
         the user is responsible for specifying the transformations. Options are "sigmoid".
     loss_fn: str
         Loss function. Options are "nll" (negative log-likelihood) or "crps" (continuous ranked probability score).
