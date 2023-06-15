@@ -10,7 +10,7 @@ class NegativeBinomial:
     Distributional Parameters
     -------------------------
     total_count: torch.Tensor
-        non-negative number of negative Bernoulli trials to stop, although the distribution is still valid for real valued count
+        non-negative number of negative Bernoulli trials to stop,  although the distribution is still valid for real valued count
     probs: torch.Tensor
         Event probabilities of success in the half open interval [0, 1).
     logits: torch.Tensor
@@ -25,17 +25,21 @@ class NegativeBinomial:
     stabilization: str
         Stabilization method for the Gradient and Hessian. Options are "None", "MAD", "L2".
     response_fn_total_count: str
-        When a custom objective and metric are provided, LightGBM doesn't know its response and link function. Hence,
+        When a custom objective and metric are provided, XGBoost doesn't know its response and link function. Hence,
         the user is responsible for specifying the transformations. Options are "exp", "softplus" or "relu".
     response_fn_probs: str
-        When a custom objective and metric are provided, LightGBM doesn't know its response and link function. Hence,
+        When a custom objective and metric are provided, XGBoost doesn't know its response and link function. Hence,
         the user is responsible for specifying the transformations. Options are "sigmoid".
-
+    loss_fn: str
+        Loss function. Options are "nll" (negative log-likelihood) or "crps" (continuous ranked probability score).
+        Note that if "crps" is used, the Hessian is set to 1, as the current CRPS version is not twice differentiable.
+        Hence, using the CRPS disregards any variation in the curvature of the loss function.
     """
     def __init__(self,
                  stabilization: str = "None",
                  response_fn_total_count: str = "relu",
-                 response_fn_probs: str = "sigmoid"
+                 response_fn_probs: str = "sigmoid",
+                 loss_fn: str = "nll"
                  ):
         # Specify Response and Link Functions for total_count
         if response_fn_total_count == "exp":
@@ -69,5 +73,6 @@ class NegativeBinomial:
                                             stabilization=stabilization,
                                             param_dict=param_dict,
                                             param_dict_inv=param_dict_inv,
-                                            distribution_arg_names=distribution_arg_names
+                                            distribution_arg_names=distribution_arg_names,
+                                            loss_fn=loss_fn
                                             )

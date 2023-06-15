@@ -2,7 +2,6 @@ from torch.distributions import Poisson as Poisson_Torch
 from lightgbmlss.utils import *
 from .distribution_utils import *
 
-
 class Poisson:
     """
     Poisson distribution class.
@@ -21,12 +20,17 @@ class Poisson:
     stabilization: str
         Stabilization method for the Gradient and Hessian. Options are "None", "MAD", "L2".
     response_fn: str
-        When a custom objective and metric are provided, LightGBM doesn't know its response and link function. Hence,
+        When a custom objective and metric are provided, XGBoost doesn't know its response and link function. Hence,
         the user is responsible for specifying the transformations. Options are "exp", "softplus" or "relu".
+    loss_fn: str
+        Loss function. Options are "nll" (negative log-likelihood) or "crps" (continuous ranked probability score).
+        Note that if "crps" is used, the Hessian is set to 1, as the current CRPS version is not twice differentiable.
+        Hence, using the CRPS disregards any variation in the curvature of the loss function.
     """
     def __init__(self,
                  stabilization: str = "None",
-                 response_fn: str = "relu"
+                 response_fn: str = "relu",
+                 loss_fn: str = "nll"
                  ):
         # Check Response Function
         if response_fn == "exp":
@@ -54,5 +58,6 @@ class Poisson:
                                             stabilization=stabilization,
                                             param_dict=param_dict,
                                             param_dict_inv=param_dict_inv,
-                                            distribution_arg_names=distribution_arg_names
+                                            distribution_arg_names=distribution_arg_names,
+                                            loss_fn=loss_fn
                                             )

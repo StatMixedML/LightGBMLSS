@@ -368,7 +368,7 @@ class LightGBMLSS:
                 hyper_params.update({"boosting": trial.suggest_categorical("boosting", ["gbdt"])})
 
             # Add pruning and early stopping
-            pruning_callback = LightGBMPruningCallback(trial, "NegLogLikelihood")
+            pruning_callback = LightGBMPruningCallback(trial, self.dist.loss_fn)
             early_stopping_callback = lgb.early_stopping(stopping_rounds=early_stopping_rounds, verbose=False)
 
             lgblss_param_tuning = self.cv(hyper_params,
@@ -380,11 +380,11 @@ class LightGBMLSS:
                                           )
 
             # Extract the optimal number of boosting rounds
-            opt_rounds = np.argmin(np.array(lgblss_param_tuning["NegLogLikelihood-mean"])) + 1
+            opt_rounds = np.argmin(np.array(lgblss_param_tuning[f"{self.dist.loss_fn}-mean"])) + 1
             trial.set_user_attr("opt_round", int(opt_rounds))
 
             # Extract the best score
-            best_score = np.min(np.array(lgblss_param_tuning["NegLogLikelihood-mean"]))
+            best_score = np.min(np.array(lgblss_param_tuning[f"{self.dist.loss_fn}-mean"]))
 
             return best_score
 
