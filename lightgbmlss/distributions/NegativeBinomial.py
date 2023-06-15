@@ -25,7 +25,7 @@ class NegativeBinomial:
     stabilization: str
         Stabilization method for the Gradient and Hessian. Options are "None", "MAD", "L2".
     response_fn_total_count: str
-        When a custom objective and metric are provided, XGBoost doesn't know its response and link function. Hence,
+        When a custom objective and metric are provided, LightGBM doesn't know its response and link function. Hence,
         the user is responsible for specifying the transformations. Options are "exp", "softplus" or "relu".
     response_fn_probs: str
         When a custom objective and metric are provided, XGBoost doesn't know its response and link function. Hence,
