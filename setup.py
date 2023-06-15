@@ -18,6 +18,7 @@ setup(
     install_requires=[
         "lightgbm~=3.3.5",
         "torch~=2.0.1",
+        "pyro-ppl~=1.8.5",
         "optuna~=3.1.1",
         "properscoring~=0.1",
         "scikit-learn~=1.2.2",
