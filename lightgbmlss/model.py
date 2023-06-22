@@ -467,6 +467,7 @@ class LightGBMLSS:
              X: pd.DataFrame,
              feature: str = "x",
              parameter: str = "loc",
+             max_display: int = 15,
              plot_type: str = "Partial_Dependence"):
         """
         LightGBMLSS SHap plotting function.
@@ -478,7 +479,9 @@ class LightGBMLSS:
         feature: str
             Specifies which feature is to be plotted.
         parameter: str
-            Specifies which parameter is to be plotted. Valid parameters are "location", "scale", "df", "tau".
+            Specifies which distributional parameter is to be plotted.
+        max_display: int
+            Specifies the maximum number of features to be displayed.
         plot_type: str
             Specifies the type of plot:
                 "Partial_Dependence" plots the partial dependence of the parameter on the feature.
@@ -497,9 +500,11 @@ class LightGBMLSS:
                 shap.plots.scatter(shap_values[:, feature][:, param_pos], color=shap_values[:, feature][:, param_pos])
         elif plot_type == "Feature_Importance":
             if self.dist.n_dist_param == 1:
-                shap.plots.bar(shap_values, max_display=15 if X.shape[1] > 15 else X.shape[1])
+                shap.plots.bar(shap_values, max_display=max_display if X.shape[1] > max_display else X.shape[1])
             else:
-                shap.plots.bar(shap_values[:, :, param_pos], max_display=15 if X.shape[1] > 15 else X.shape[1])
+                shap.plots.bar(
+                    shap_values[:, :, param_pos], max_display=max_display if X.shape[1] > max_display else X.shape[1]
+                )
 
     def expectile_plot(self,
                        X: pd.DataFrame,
@@ -564,6 +569,7 @@ class LightGBMLSS:
 
         return valid_sets
 
+    @staticmethod
     def save_model(self, model_path):
         """
         Save the model to a file.
