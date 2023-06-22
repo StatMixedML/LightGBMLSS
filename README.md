@@ -13,6 +13,7 @@ We propose a new framework of LightGBM that predicts the entire conditional dist
 :white_check_mark: LightGBMLSS is available in Python. <br/>
 
 ## News
+:boom: [2023-05-22] Release of v0.2.2. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
 :boom: [2023-06-15] LightGBMLSS now supports Zero-Inflated and Zero-Adjusted Distributions. <br/>
 :boom: [2023-05-26] Release of v0.2.1. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
 :boom: [2023-05-23] Release of v0.2.0. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
