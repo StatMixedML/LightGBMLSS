@@ -60,7 +60,7 @@ class LightGBMLSS:
         Starting values for each distributional parameter.
     """
     def __init__(self, dist):
-        self.dist = dist.dist_class  # Distribution object
+        self.dist = dist             # Distribution object
         self.start_values = None     # Starting values for distributional parameters
 
     def __getstate__(self):
@@ -569,8 +569,10 @@ class LightGBMLSS:
 
         return valid_sets
 
-    @staticmethod
-    def save_model(self, model_path):
+
+    def save_model(self,
+                   model_path: str
+                   ) -> None:
         """
         Save the model to a file.
 
@@ -586,8 +588,9 @@ class LightGBMLSS:
         with open(model_path, "wb") as f:
             pickle.dump(self, f)
 
+
     @staticmethod
-    def load_model(model_path):
+    def load_model(model_path: str):
         """
         Load the model from a file.
 
