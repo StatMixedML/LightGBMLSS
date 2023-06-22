@@ -157,7 +157,7 @@ class LightGBMLSS:
                                  categorical_feature=categorical_feature,
                                  keep_training_booster=keep_training_booster,
                                  callbacks=callbacks)
-        return self.booster
+        # return self.booster
 
     def cv(self,
            params: Dict[str, Any],
