@@ -70,6 +70,47 @@ class LightGBMLSS:
     def __setstate__(self, state):
         self.__dict__.update(state)  # Restore the object's state
 
+    def set_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Set parameters for distributional model.
+
+        Arguments
+        ---------
+        params : Dict[str, Any]
+            Parameters for model.
+
+        Returns
+        -------
+        params : Dict[str, Any]
+            Updated Parameters for model.
+        """
+        params_adj = {"num_class": self.dist.n_dist_param,
+                      "metric": "None",
+                      "objective": "None",
+                      "random_seed": 123,
+                      "verbose": -1}
+        params.update(params_adj)
+
+        return params
+
+    def set_init_score(self, dmatrix: Dataset) -> None:
+        """
+        Set init_score for distributions.
+
+        Arguments
+        ---------
+        dmatrix : Dataset
+            Dataset to set base margin for.
+
+        Returns
+        -------
+        None
+        """
+        if self.start_values is None:
+            _, self.start_values = self.dist.calculate_start_values(dmatrix.get_label())
+        init_score = (np.ones(shape=(dmatrix.get_label().shape[0], 1))) * self.start_values
+        dmatrix.set_init_score(init_score.ravel(order="F"))
+
     def train(self,
               params: Dict[str, Any],
               train_set: Dataset,
@@ -128,19 +169,8 @@ class LightGBMLSS:
         booster : Booster
             The trained Booster model.
         """
-        params_adj = {"num_class": self.dist.n_dist_param,
-                      "metric": "None",
-                      "objective": "None",
-                      "random_seed": 123,
-                      "verbose": -1}
-
-        params.update(params_adj)
-
-        # Set init_score as starting point for each distributional parameter.
-        if self.start_values is None:
-            _, self.start_values = self.dist.calculate_start_values(train_set.get_label())
-        init_score_train = (np.ones(shape=(train_set.get_label().shape[0], 1))) * self.start_values
-        train_set.set_init_score(init_score_train.ravel(order="F"))
+        self.set_params(params)
+        self.set_init_score(train_set)
 
         if valid_sets is not None:
             valid_sets = self.set_valid_margin(valid_sets, self.start_values)
@@ -157,7 +187,6 @@ class LightGBMLSS:
                                  categorical_feature=categorical_feature,
                                  keep_training_booster=keep_training_booster,
                                  callbacks=callbacks)
-        # return self.booster
 
     def cv(self,
            params: Dict[str, Any],
@@ -238,19 +267,8 @@ class LightGBMLSS:
             ...}.
             If ``return_cvbooster=True``, also returns trained boosters wrapped in a ``CVBooster`` object via ``cvbooster`` key.
         """
-        params_adj = {"num_class": self.dist.n_dist_param,
-                      "metric": "None",
-                      "objective": "None",
-                      "random_seed": 123,
-                      "verbose": -1}
-
-        params.update(params_adj)
-
-        # Set init_score as starting point for each distributional parameter.
-        if self.start_values is None:
-            _, self.start_values = self.dist.calculate_start_values(train_set.get_label())
-        init_score_cv = (np.ones(shape=(train_set.get_label().shape[0], 1))) * self.start_values
-        train_set.set_init_score(init_score_cv.ravel(order="F"))
+        self.set_params(params)
+        self.set_init_score(train_set)
 
         self.bstLSS_cv = lgb.cv(params,
                                 train_set,
@@ -569,7 +587,6 @@ class LightGBMLSS:
 
         return valid_sets
 
-
     def save_model(self,
                    model_path: str
                    ) -> None:
@@ -587,7 +604,6 @@ class LightGBMLSS:
         """
         with open(model_path, "wb") as f:
             pickle.dump(self, f)
-
 
     @staticmethod
     def load_model(model_path: str):
