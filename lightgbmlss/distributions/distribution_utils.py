@@ -384,13 +384,12 @@ class DistributionClass:
             dtype=torch.float32
         )
 
-        # The prediction result doesn't include the init_score specified in creating the train data.
+        # The predictions don't include the init_score specified in creating the train data.
         # Hence, it needs to be added manually with the corresponding transform for each distributional parameter.
-        # Transform predicted parameters to response scale
         dist_params_predt = np.concatenate(
             [
                 response_fun(
-                    predt[:, i].reshape(-1, 1) + + init_score_pred[:, i].reshape(-1, 1)).numpy()
+                    predt[:, i].reshape(-1, 1) + init_score_pred[:, i].reshape(-1, 1)).numpy()
                 for i, (dist_param, response_fun) in enumerate(self.param_dict.items())
             ],
             axis=1,
@@ -541,7 +540,6 @@ class DistributionClass:
 
         return stab_der
 
-
     def crps_score(self, y: torch.tensor, yhat_dist: torch.tensor) -> torch.tensor:
         """
         Function that calculates the Continuous Ranked Probability Score (CRPS) for a given set of predicted samples.
@@ -595,7 +593,6 @@ class DistributionClass:
         crps += flag * (y - yhat)
 
         return crps
-
 
     def dist_select(self,
                     target: np.ndarray,
