@@ -356,7 +356,8 @@ class DistributionClass:
                                booster: lgb.Booster,
                                test_set: pd.DataFrame,
                                start_values: np.ndarray,
-                               x: Union[torch.Tensor, list, np.ndarray]) -> pd.DataFrame:
+                               x: Optional[Union[torch.Tensor, list, np.ndarray]] = None,
+                               y: Optional[Union[torch.Tensor, list, np.ndarray]] = None) -> pd.DataFrame:
         """
         Function that generate a probability for each x from the trained model.
 
@@ -370,18 +371,30 @@ class DistributionClass:
             Starting values for each distributional parameter.
         x : Union[torch.Tensor, list, np.ndarray]
             A set of values to predict the probability for
+        y : Union[torch.Tensor, list, np.ndarray]
+            The observed values in the data which is the same length as test_set
 
         Returns
         -------
         probs : pd.DataFrame [n_obs * len(x)]
             Probabilities for each x occurring within each of the distribution.
         """
+        if x and y:
+            warnings.warn('Both x and y has been provide, probabilities will only be calculated for x')
+
+        if x is not None:
+            column_names = x
+            values = torch.tensor(x).reshape((len(x), 1))
+        elif y is not None:
+            values = torch.tensor(y)
+            column_names = ['likelihood']
+        else:
+            raise Exception('Either x or y must be provided')
         predt_params = self.predict_dist(booster=booster, test_set=test_set,
                                          start_values=start_values, pred_type='parameters')
-        values = torch.tensor(x).reshape((len(x), 1))
         dist_pred = self.initialize_distribution(predt_params)
-        probabilities = dist_pred.log_prob(values).exp().T()
-        probabilities = pd.DataFrame(probabilities, columns=values[:, 0].numpy())
+        probabilities = dist_pred.log_prob(values).exp().T
+        probabilities = pd.DataFrame(probabilities, columns=column_names)
         return probabilities
 
     def predict_dist(self,
