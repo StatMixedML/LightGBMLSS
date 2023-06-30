@@ -378,8 +378,7 @@ class DistributionClass:
         """
         predt_params = self.predict_dist(booster=booster, test_set=test_set,
                                          start_values=start_values, pred_type='parameters')
-        values = torch.tensor(x)
-        values = values.reshape((len(x), 1))
+        values = torch.tensor(x).reshape((len(x), 1))
         dist_pred = self.initialize_distribution(predt_params)
         probabilities = dist_pred.log_prob(values).exp().T()
         probabilities = pd.DataFrame(probabilities, columns=values[:, 0].numpy())
