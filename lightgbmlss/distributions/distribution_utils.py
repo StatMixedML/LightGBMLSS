@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from typing import Any, Dict, Optional, List, Tuple
+from typing import Any, Dict, Optional, List, Tuple, Union
 from plotnine import *
 import warnings
 
@@ -294,6 +294,26 @@ class DistributionClass:
 
         return predt, loss
 
+    def initialize_distributions(self,
+                                 predt_params: pd.DataFrame) -> torch.distributions.Distribution:
+        """
+        Function that draws n_samples from a predicted distribution.
+
+        Arguments
+        ---------
+        predt_params: pd.DataFrame
+            pd.DataFrame with predicted distributional parameters.
+
+        Returns
+        -------
+        dist_pred: torch.distributions.Distribution
+            The distribution initialised with the parameters from the prediction
+        """
+        pred_params = torch.tensor(predt_params.values)
+        dist_kwargs = {arg_name: param for arg_name, param in zip(self.distribution_arg_names, pred_params.T)}
+        dist_pred = self.distribution(**dist_kwargs)
+        return dist_pred
+
     def draw_samples(self,
                      predt_params: pd.DataFrame,
                      n_samples: int = 1000,
@@ -320,9 +340,7 @@ class DistributionClass:
         torch.manual_seed(seed)
 
         if self.tau is None:
-            pred_params = torch.tensor(predt_params.values)
-            dist_kwargs = {arg_name: param for arg_name, param in zip(self.distribution_arg_names, pred_params.T)}
-            dist_pred = self.distribution(**dist_kwargs)
+            dist_pred = self.initialize_distributions(predt_params)
             dist_samples = dist_pred.sample((n_samples,)).squeeze().detach().numpy().T
             dist_samples = pd.DataFrame(dist_samples)
             dist_samples.columns = [str("y_sample") + str(i) for i in range(dist_samples.shape[1])]
@@ -333,6 +351,39 @@ class DistributionClass:
             dist_samples = dist_samples.astype(int)
 
         return dist_samples
+
+    def generate_probabilities(self,
+                               booster: lgb.Booster,
+                               test_set: pd.DataFrame,
+                               start_values: np.ndarray,
+                               x: Union[torch.Tensor, list, np.ndarray]) -> pd.DataFrame:
+        """
+        Function that generate a probability for each x from the trained model.
+
+        Arguments
+        ---------
+        booster : lgb.Booster
+            Trained model.
+        test_set : pd.DataFrame
+            Test data.
+        start_values : np.ndarray.
+            Starting values for each distributional parameter.
+        x : Union[torch.Tensor, list, np.ndarray]
+            A set of values to predict the probability for
+
+        Returns
+        -------
+        probs : pd.DataFrame [n_obs * len(x)]
+            Probabilities for each x occurring within each of the distribution.
+        """
+        predt_params = self.predict_dist(booster=booster, test_set=test_set,
+                                         start_values=start_values, pred_type='parameters')
+        values = torch.tensor(x)
+        values = values.reshape((len(x), 1))
+        dist_pred = self.initialize_distributions(predt_params)
+        probabilities = dist_pred.log_prob(values).exp().T()
+        probabilities = pd.DataFrame(probabilities, columns=values[:, 0].numpy())
+        return probabilities
 
     def predict_dist(self,
                      booster: lgb.Booster,
