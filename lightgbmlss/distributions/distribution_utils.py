@@ -294,10 +294,10 @@ class DistributionClass:
 
         return predt, loss
 
-    def initialize_distributions(self,
-                                 predt_params: pd.DataFrame) -> torch.distributions.Distribution:
+    def initialize_distribution(self,
+                                predt_params: pd.DataFrame) -> torch.distributions.Distribution:
         """
-        Function that draws n_samples from a predicted distribution.
+        Function that initializes the torch distribution class with the predt_params.
 
         Arguments
         ---------
@@ -307,7 +307,7 @@ class DistributionClass:
         Returns
         -------
         dist_pred: torch.distributions.Distribution
-            The distribution initialised with the parameters from the prediction
+            The distribution initialized with the parameters from the prediction
         """
         pred_params = torch.tensor(predt_params.values)
         dist_kwargs = {arg_name: param for arg_name, param in zip(self.distribution_arg_names, pred_params.T)}
@@ -340,7 +340,7 @@ class DistributionClass:
         torch.manual_seed(seed)
 
         if self.tau is None:
-            dist_pred = self.initialize_distributions(predt_params)
+            dist_pred = self.initialize_distribution(predt_params)
             dist_samples = dist_pred.sample((n_samples,)).squeeze().detach().numpy().T
             dist_samples = pd.DataFrame(dist_samples)
             dist_samples.columns = [str("y_sample") + str(i) for i in range(dist_samples.shape[1])]
@@ -380,7 +380,7 @@ class DistributionClass:
                                          start_values=start_values, pred_type='parameters')
         values = torch.tensor(x)
         values = values.reshape((len(x), 1))
-        dist_pred = self.initialize_distributions(predt_params)
+        dist_pred = self.initialize_distribution(predt_params)
         probabilities = dist_pred.log_prob(values).exp().T()
         probabilities = pd.DataFrame(probabilities, columns=values[:, 0].numpy())
         return probabilities
