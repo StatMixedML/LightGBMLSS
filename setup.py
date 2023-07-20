@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="lightgbmlss",
     version="0.3.0",
-    description="LightGBMLSS - An extension of LightGBM to probabilistic forecasting",
+    description="LightGBMLSS - An extension of LightGBM to probabilistic modelling and prediction",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     author="Alexander März",
