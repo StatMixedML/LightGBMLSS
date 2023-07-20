@@ -439,7 +439,7 @@ class LightGBMLSS:
         return opt_param.params
 
     def predict(self,
-                test_set: pd.DataFrame,
+                data: pd.DataFrame,
                 pred_type: str = "parameters",
                 n_samples: int = 1000,
                 quantiles: list = [0.1, 0.5, 0.9],
@@ -449,8 +449,8 @@ class LightGBMLSS:
 
         Arguments
         ---------
-        test_set : pd.DataFrame
-            Test data.
+        data : pd.DataFrame
+            Data to predict from.
         pred_type : str
             Type of prediction:
             - "samples" draws n_samples from the predicted distribution.
@@ -472,7 +472,7 @@ class LightGBMLSS:
 
         # Predict
         predt_df = self.dist.predict_dist(booster=self.booster,
-                                          test_set=test_set,
+                                          data=data,
                                           start_values=self.start_values,
                                           pred_type=pred_type,
                                           n_samples=n_samples,
