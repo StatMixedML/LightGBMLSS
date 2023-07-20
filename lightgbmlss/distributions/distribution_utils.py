@@ -336,7 +336,7 @@ class DistributionClass:
 
     def predict_dist(self,
                      booster: lgb.Booster,
-                     test_set: pd.DataFrame,
+                     data: pd.DataFrame,
                      start_values: np.ndarray,
                      pred_type: str = "parameters",
                      n_samples: int = 1000,
@@ -350,8 +350,8 @@ class DistributionClass:
         ---------
         booster : lgb.Booster
             Trained model.
-        test_set : pd.DataFrame
-            Test data.
+        data : pd.DataFrame
+            Data to predict from.
         start_values : np.ndarray.
             Starting values for each distributional parameter.
         pred_type : str
@@ -374,13 +374,13 @@ class DistributionClass:
         """
 
         predt = torch.tensor(
-            booster.predict(test_set, raw_score=True),
+            booster.predict(data, raw_score=True),
             dtype=torch.float32
         ).reshape(-1, self.n_dist_param)
 
         # Set init_score as starting point for each distributional parameter.
         init_score_pred = torch.tensor(
-            np.ones(shape=(test_set.shape[0], 1))*start_values,
+            np.ones(shape=(data.shape[0], 1))*start_values,
             dtype=torch.float32
         )
 
