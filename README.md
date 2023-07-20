@@ -67,6 +67,9 @@ For improved convergence, an alternative approach is to standardize the (continu
 ### Runtime
 Since LightGBMLSS is based on a *one vs. all estimation strategy*, where a separate tree is grown for each distributional parameter, it requires training ```[number of iterations] * [number of distributional parameters]``` trees. Hence, the runtime of LightGBMLSS is generally slightly higher for univariate distributions as compared to LightGBM, which requires training ```[number of iterations]``` trees only.
 
+## Feedback
+We encourage you to provide feedback on how to enhance LightGBMLSS or request the implementation of additional distributions by opening a new discussion.
+
 ## Reference Paper
 März, A. and Kneib, T.: (2022) [*Distributional Gradient Boosting Machines*](https://arxiv.org/abs/2204.00778). <br/>
 März, Alexander (2019): [*XGBoostLSS - An extension of XGBoost to probabilistic forecasting*](https://arxiv.org/abs/1907.03178). 
