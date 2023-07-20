@@ -6,6 +6,7 @@ We propose a new framework of LightGBM that predicts the entire conditional dist
 
 ## Features
 :white_check_mark: Estimation of all distributional parameters. <br/>
+:white_check_mark: Normalizing Flows allow modelling of complex and multi-modal distributions. <br/>
 :white_check_mark: Automatic derivation of Gradients and Hessian of all distributional parameters using [PyTorch](https://pytorch.org/docs/stable/autograd.html). <br/>
 :white_check_mark: Automated hyper-parameter search, including pruning, is done via [Optuna](https://optuna.org/). <br/>
 :white_check_mark: The output of LightGBMLSS is explained using [SHapley Additive exPlanations](https://github.com/dsgibbons/shap). <br/>
@@ -13,6 +14,7 @@ We propose a new framework of LightGBM that predicts the entire conditional dist
 :white_check_mark: LightGBMLSS is available in Python. <br/>
 
 ## News
+:boom: [2023-07-20] Release of v0.3.0 introduces Normalizing Flows. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
 :boom: [2023-06-22] Release of v0.2.2. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
 :boom: [2023-06-15] LightGBMLSS now supports Zero-Inflated and Zero-Adjusted Distributions. <br/>
 :boom: [2023-05-26] Release of v0.2.1. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
@@ -39,13 +41,18 @@ LightGBMLSS currently supports the following [PyTorch distributions](https://pyt
 | :----------------------------------------------------------------------------------------------------------------------------------: |:------------------------: |:-------------------------------------:     | :-----------------------------: | :-----------------------------: | 
 | [Beta](https://pytorch.org/docs/stable/distributions.html#beta)                                                                      | `Beta()`                  | Continuous <br /> (Univariate)             | $y \in (0, 1)$                  | 2                               |
 | [Cauchy](https://pytorch.org/docs/stable/distributions.html#cauchy)                                                                  | `Cauchy()`                | Continuous <br /> (Univariate)             | $y \in (-\infty,\infty)$        | 2                               |
+| [Dirichlet](https://pytorch.org/docs/stable/distributions.html#dirichlet)                                                            | `Dirichlet(D)`            | Continuous <br /> (Multivariate)           | $y_{D} \in (0, 1)$              | D                               |
 | [Expectile](https://epub.ub.uni-muenchen.de/31542/1/1471082x14561155.pdf)                                                            | `Expectile()`             | Continuous <br /> (Univariate)             | $y \in (-\infty,\infty)$        | Number of expectiles            |
 | [Gamma](https://pytorch.org/docs/stable/distributions.html#gamma)                                                                    | `Gamma()`                 | Continuous <br /> (Univariate)             | $y \in (0, \infty)$             | 2                               |
 | [Gaussian](https://pytorch.org/docs/stable/distributions.html#normal)                                                                | `Gaussian()`              | Continuous <br /> (Univariate)             | $y \in (-\infty,\infty)$        | 2                               |
 | [Gumbel](https://pytorch.org/docs/stable/distributions.html#gumbel)                                                                  | `Gumbel()`                | Continuous <br /> (Univariate)             | $y \in (-\infty,\infty)$        | 2                               |
 | [Laplace](https://pytorch.org/docs/stable/distributions.html#laplace)                                                                | `Laplace()`               | Continuous <br /> (Univariate)             | $y \in (-\infty,\infty)$        | 2                               |
 | [LogNormal](https://pytorch.org/docs/stable/distributions.html#lognormal)                                                            | `LogNormal()`             | Continuous <br /> (Univariate)             | $y \in (0,\infty)$              | 2                               |
+| [Multivariate Normal (Cholesky)](https://pytorch.org/docs/stable/distributions.html#multivariatenormal)                              | `MVN(D)`                  | Continuous <br /> (Multivariate)           | $y_{D} \in (-\infty,\infty)$    | D(D + 3)/2                      |
+| [Multivariate Normal (Low-Rank)](https://pytorch.org/docs/stable/distributions.html#lowrankmultivariatenormal)                       | `MVN_LoRa(D, rank)`       | Continuous <br /> (Multivariate)           | $y_{D} \in (-\infty,\infty)$    | D(2+rank)                       |
+| [Multivariate Student-T](https://docs.pyro.ai/en/stable/distributions.html#multivariatestudentt)                                     | `MVT(D)`                  | Continuous <br /> (Multivariate)           | $y_{D} \in (-\infty,\infty)$    | 1 + D(D + 3)/2                  |
 | [Negative Binomial](https://pytorch.org/docs/stable/distributions.html#negativebinomial)                                             | `NegativeBinomial()`      | Discrete Count <br /> (Univariate)         | $y \in (0, 1, 2, 3, \ldots)$    | 2                               |
+| [Spline Flow](https://docs.pyro.ai/en/stable/distributions.html#pyro.distributions.transforms.Spline)                                | `SplineFlow()`            | Continuous \& Discrete Count <br /> (Univariate)   | $y \in (-\infty,\infty)$ <br /> <br /> $y \in [0, \infty)$  <br  /> <br /> $y \in [0, 1]$  <br  />  <br /> $y \in (0, 1, 2, 3, \ldots)$ | 2xcount_bins + (count_bins-1) (order=quadratic)  <br  /> <br  />  3xcount_bins + (count_bins-1) (order=linear)                            |
 | [Poisson](https://pytorch.org/docs/stable/distributions.html#poisson)                                                                | `Poisson()`               | Discrete Count <br /> (Univariate)         | $y \in (0, 1, 2, 3, \ldots)$    | 1                               |
 | [Student-T](https://pytorch.org/docs/stable/distributions.html#studentt)                                                             | `StudentT()`              | Continuous <br /> (Univariate)             | $y \in (-\infty,\infty)$        | 3                               |
 | [Weibull](https://pytorch.org/docs/stable/distributions.html#weibull)                                                                | `Weibull()`               | Continuous <br /> (Univariate)             | $y \in [0, \infty)$             | 2                               |
@@ -62,8 +69,7 @@ Since LightGBMLSS updates the parameter estimates by optimizing Gradients and He
 For improved convergence, an alternative approach is to standardize the (continuous) response variable, such as dividing it by 100 (e.g., y/100). This approach proves especially valuable when the response range significantly differs from that of Gradients and Hessians. Nevertheless, it is essential to carefully evaluate and apply both the built-in stabilization and response standardization techniques in consideration of the specific dataset at hand.
 
 ### Runtime
-Since LightGBMLSS updates all distributional parameters simultaneously, it requires training ```[number of iterations] * [number of distributional parameters]``` trees. Hence, the runtime of LightGBMLSS is generally slightly higher as compared to LightGBM, which requires training ```[number of iterations]``` trees only. 
-
+Since LightGBMLSS is based on a *one vs. all estimation strategy*, where a separate tree is grown for each distributional parameter, it requires training ```[number of iterations] * [number of distributional parameters]``` trees. Hence, the runtime of LightGBMLSS is generally slightly higher for univariate distributions as compared to LightGBM, which requires training ```[number of iterations]``` trees only.
 
 ## Reference Paper
 März, A. and Kneib, T.: (2022) [*Distributional Gradient Boosting Machines*](https://arxiv.org/abs/2204.00778). <br/>
