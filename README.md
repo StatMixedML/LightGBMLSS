@@ -35,7 +35,7 @@ pip install git+https://github.com/dsgibbons/shap.git
 ```
 
 ## Available Distributions
-LightGBMLSS currently supports the following [PyTorch distributions](https://pytorch.org/docs/stable/distributions.html).
+LightGBMLSS currently supports the following distributions.
 
 | Distribution                                                                                                                         |   Usage                   |Type                                        | Support                         | Number of Parameters            |
 | :----------------------------------------------------------------------------------------------------------------------------------: |:------------------------: |:-------------------------------------:     | :-----------------------------: | :-----------------------------: | 
