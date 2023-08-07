@@ -59,12 +59,12 @@ LightGBMLSS currently supports the following distributions.
 | [Zero-Inflated Poisson](https://github.com/pyro-ppl/pyro/blob/dev/pyro/distributions/zero_inflated.py#L121)                          | `ZIPoisson()`             | Discrete-Count <br /> (Univariate)         | $y \in [0, 1, 2, 3, \ldots)$    | 2                               |
 
 ## Some Notes
-### Stabilization
+> ### Stabilization
 Since LightGBMLSS updates the parameter estimates by optimizing Gradients and Hessians, it is important that these are comparable in magnitude for all distributional parameters. Due to variability regarding the ranges, the estimation of Gradients and Hessians might become unstable so that LightGBMLSS might not converge or might converge very slowly. To mitigate these effects, we have implemented a stabilization of Gradients and Hessians. 
 
 For improved convergence, an alternative approach is to standardize the (continuous) response variable, such as dividing it by 100 (e.g., y/100). This approach proves especially valuable when the response range significantly differs from that of Gradients and Hessians. Nevertheless, it is essential to carefully evaluate and apply both the built-in stabilization and response standardization techniques in consideration of the specific dataset at hand.
 
-### Runtime
+> ### Runtime
 Since LightGBMLSS is based on a *one vs. all estimation strategy*, where a separate tree is grown for each distributional parameter, it requires training ```[number of iterations] * [number of distributional parameters]``` trees. Hence, the runtime of LightGBMLSS is generally slightly higher for univariate distributions as compared to LightGBM, which requires training ```[number of iterations]``` trees only.
 
 ## Feedback
