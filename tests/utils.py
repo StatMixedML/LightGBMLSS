@@ -30,41 +30,20 @@ def gen_test_data(dist_class, weights: bool = False):
     dmatrix (lgb.Dataset):
         DMatrix.
     """
-    if dist_class.dist.univariate:
-        np.random.seed(123)
-        predt = np.random.rand(dist_class.dist.n_dist_param * 4).reshape(-1, dist_class.dist.n_dist_param)
-        labels = np.array([0.2, 0.4, 0.6, 0.8]).reshape(-1, 1)
-        if weights:
-            weights = np.ones_like(labels)
-            dmatrix = lgb.Dataset(predt, label=labels, weight=weights)
-            dist_class.set_init_score(dmatrix)
+    np.random.seed(123)
+    predt = np.random.rand(dist_class.dist.n_dist_param * 4).reshape(-1, dist_class.dist.n_dist_param)
+    labels = np.array([0.2, 0.4, 0.6, 0.8]).reshape(-1, 1)
+    if weights:
+        weights = np.ones_like(labels)
+        dmatrix = lgb.Dataset(predt, label=labels, weight=weights)
+        dist_class.set_init_score(dmatrix)
 
-            return predt, labels, weights, dmatrix
-        else:
-            dmatrix = lgb.Dataset(predt, label=labels)
-            dist_class.set_init_score(dmatrix)
-
-            return predt, labels, dmatrix
+        return predt, labels, weights, dmatrix
     else:
-        np.random.seed(123)
-        predt = np.random.rand(dist_class.dist.n_dist_param * 4).reshape(-1, dist_class.dist.n_dist_param)
-        labels = np.arange(0.1, 0.9, 0.1)
-        labels = dist_class.dist.target_append(
-            labels,
-            dist_class.dist.n_targets,
-            dist_class.dist.n_dist_param
-        )
-        if weights:
-            weights = np.ones_like(labels[:, 0], dtype=labels.dtype).reshape(-1, 1)
-            dmatrix = lgb.Dataset(predt, label=labels, weight=weights)
-            dist_class.set_init_score(dmatrix)
+        dmatrix = lgb.Dataset(predt, label=labels)
+        dist_class.set_init_score(dmatrix)
 
-            return predt, labels, weights, dmatrix
-        else:
-            dmatrix = lgb.Dataset(predt, label=labels)
-            dist_class.set_init_score(dmatrix)
-
-            return predt, labels, dmatrix
+        return predt, labels, dmatrix
 
 
 def get_distribution_classes(univariate: bool = True,
@@ -128,18 +107,6 @@ def get_distribution_classes(univariate: bool = True,
         if distribution_class().univariate and distribution_class().discrete:
             univar_discrete_distns.append(distribution_class)
 
-    # Extract all multivariate distributions
-    multivar_distns = []
-    for distribution_name in distns:
-        # Import the module dynamically
-        module = importlib.import_module(f"lightgbmlss.distributions.{distribution_name}")
-
-        # Get the class dynamically from the module
-        distribution_class = getattr(module, distribution_name)
-
-        if not distribution_class().univariate:
-            multivar_distns.append(distribution_class)
-
     # Extract distributions only that have a rsample method
     rsample_distns = []
     for distribution_name in distns:
@@ -178,9 +145,6 @@ def get_distribution_classes(univariate: bool = True,
         else:
             return univar_cont_distns
 
-    elif not univariate and not flow and not expectile:
-        return multivar_distns
-
     elif flow:
         distribution_name = "SplineFlow"
         module = importlib.import_module(f"lightgbmlss.distributions.{distribution_name}")
@@ -207,10 +171,6 @@ class BaseTestClass:
     def univariate_discrete_dist(self, request):
         return request.param
 
-    @pytest.fixture(params=get_distribution_classes(univariate=False))
-    def multivariate_dist(self, request):
-        return request.param
-
     @pytest.fixture(params=get_distribution_classes(flow=True))
     def flow_dist(self, request):
         return request.param
@@ -219,22 +179,18 @@ class BaseTestClass:
     def expectile_dist(self, request):
         return request.param
 
-    @pytest.fixture(params=
-                    get_distribution_classes() +
-                    get_distribution_classes(discrete=True) +
-                    get_distribution_classes(expectile=True) +
-                    get_distribution_classes(flow=True) +
-                    get_distribution_classes(univariate=False)
-                    )
+    @pytest.fixture(
+        params=get_distribution_classes() +
+               get_distribution_classes(discrete=True) +
+               get_distribution_classes(expectile=True) +
+               get_distribution_classes(flow=True) +
+               get_distribution_classes(univariate=False)
+    )
     def dist_class(self, request):
         return LightGBMLSS(request.param())
 
     @pytest.fixture(params=get_distribution_classes(flow=True))
     def flow_class(self, request):
-        return LightGBMLSS(request.param())
-
-    @pytest.fixture(params=get_distribution_classes(univariate=False))
-    def multivariate_class(self, request):
         return LightGBMLSS(request.param())
 
     @pytest.fixture(params=get_distribution_classes(rsample=True))

@@ -10,10 +10,7 @@ class TestClass(BaseTestClass):
             torch.tensor(0.5, dtype=torch.float64).reshape(-1, 1).requires_grad_(True) for _ in
             range(dist_class.dist.n_dist_param)
         ]
-        if dist_class.dist.univariate:
-            target = torch.tensor(target)
-        else:
-            target = torch.tensor(target)[:, :dist_class.dist.n_targets]
+        target = torch.tensor(target)
 
         # Set the loss function for testing
         dist_class.dist.loss_fn = loss_fn

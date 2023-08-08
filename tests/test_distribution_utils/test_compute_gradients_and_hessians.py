@@ -8,10 +8,7 @@ class TestClass(BaseTestClass):
     def test_compute_gradients_and_hessians(self, dist_class, loss_fn, stabilization):
         # Create data for testing
         params, target, weights, _ = gen_test_data(dist_class, weights=True)
-        if dist_class.dist.univariate:
-            target = torch.tensor(target)
-        else:
-            target = torch.tensor(target)[:, :dist_class.dist.n_targets]
+        target = torch.tensor(target)
         start_values = np.array([0.5 for _ in range(dist_class.dist.n_dist_param)])
 
         # Set the loss function for testing
@@ -44,10 +41,7 @@ class TestClass(BaseTestClass):
     def test_compute_gradients_and_hessians_crps(self, dist_class_crps, stabilization):
         # Create data for testing
         params, target, weights, _ = gen_test_data(dist_class_crps, weights=True)
-        if dist_class_crps.dist.univariate:
-            target = torch.tensor(target)
-        else:
-            target = torch.tensor(target)[:, :dist_class_crps.dist.n_targets]
+        target = torch.tensor(target)
         start_values = np.array([0.5 for _ in range(dist_class_crps.dist.n_dist_param)])
 
         # Set the loss function for testing
@@ -81,10 +75,7 @@ class TestClass(BaseTestClass):
         # Create data for testing
         params, target, weights, _ = gen_test_data(dist_class, weights=True)
         params[0, 0] = np.nan
-        if dist_class.dist.univariate:
-            target = torch.tensor(target)
-        else:
-            target = torch.tensor(target)[:, :dist_class.dist.n_targets]
+        target = torch.tensor(target)
         start_values = np.array([0.5 for _ in range(dist_class.dist.n_dist_param)])
 
         # Set the loss function for testing
