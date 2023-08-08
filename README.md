@@ -1,3 +1,15 @@
+# 
+<h4 align="center">
+
+![Python Version](https://img.shields.io/badge/python-3.9%20|%203.10-lightblue.svg)
+![GitHub Release (with filter)](https://img.shields.io/github/v/release/StatMixedML/LightGBMLSS?color=lightblue&label=release)
+[![Github License](https://img.shields.io/badge/license-Apache%202.0-lightblue.svg)](https://opensource.org/licenses/Apache-2.0)
+<img src="https://github.com/StatMixedML/LightGBMLSS/workflows/unit-tests/badge.svg" alt="Unit test status badge">
+<img src="https://codecov.io/gh/StatMixedML/LightGBMLSS/branch/master/graph/badge.svg" alt="Code coverage status badge">
+
+</h4>
+
+#
 <img align="right" width="156.5223" height="181.3" src="../master/figures/LightGBMLSS.png">
 
 
