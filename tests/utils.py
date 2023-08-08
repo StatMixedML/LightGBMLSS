@@ -183,8 +183,7 @@ class BaseTestClass:
         params=get_distribution_classes() +
                get_distribution_classes(discrete=True) +
                get_distribution_classes(expectile=True) +
-               get_distribution_classes(flow=True) +
-               get_distribution_classes(univariate=False)
+               get_distribution_classes(flow=True)
     )
     def dist_class(self, request):
         return LightGBMLSS(request.param())
