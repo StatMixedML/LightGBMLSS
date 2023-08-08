@@ -113,7 +113,7 @@ class NormalizingFlowClass:
         start_values = data.get_init_score().reshape(-1, self.n_dist_param)[0, :].tolist()
 
         # Calculate gradients and hessians
-        predt, loss = self.get_params_loss(predt, target.view(-1), start_values)
+        predt, loss = self.get_params_loss(predt, target, start_values)
         grad, hess = self.compute_gradients_and_hessians(loss, predt, weights)
 
         return grad, hess
@@ -144,9 +144,9 @@ class NormalizingFlowClass:
 
         # Calculate loss
         is_higher_better = False
-        _, loss = self.get_params_loss(predt, target.view(-1), start_values)
+        _, loss = self.get_params_loss(predt, target, start_values)
 
-        return self.loss_fn, loss.detach().numpy(), is_higher_better
+        return self.loss_fn, loss.detach(), is_higher_better
 
     def calculate_start_values(self,
                                target: np.ndarray,
@@ -231,7 +231,8 @@ class NormalizingFlowClass:
                         predt: np.ndarray,
                         target: torch.Tensor,
                         start_values: List[float],
-                        ) -> Tuple[np.ndarray, np.ndarray]:
+                        requires_grad: bool = False,
+                        ) -> Tuple[List[torch.Tensor], np.ndarray]:
         """
         Function that returns the predicted parameters and the loss.
 
@@ -251,6 +252,9 @@ class NormalizingFlowClass:
         loss: torch.Tensor
             Loss value.
         """
+        # Reshape Target
+        target = target.view(-1)
+
         # Predicted Parameters
         predt = predt.reshape(-1, self.n_dist_param, order="F")
 
@@ -419,7 +423,7 @@ class NormalizingFlowClass:
         pred_type : str
             Type of prediction:
             - "samples" draws n_samples from the predicted distribution.
-            - "quantile" calculates the quantiles from the predicted distribution.
+            - "quantiles" calculates the quantiles from the predicted distribution.
             - "parameters" returns the predicted distributional parameters.
             - "expectiles" returns the predicted expectiles.
         n_samples : int
@@ -669,7 +673,7 @@ class NormalizingFlowClass:
                 flow_name = str(flow.__class__).split(".")[-1].split("'>")[0]
                 flow_spec = f"(count_bins: {flow.count_bins}, order: {flow.order})"
                 flow_name = flow_name + flow_spec
-                pbar.set_description(f"Fitting {flow_name} Normalizing Flow")
+                pbar.set_description(f"Fitting {flow_name}")
                 flow_sel = flow
                 try:
                     loss, params = flow_sel.calculate_start_values(target=target, max_iter=max_iter)

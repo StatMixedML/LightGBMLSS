@@ -237,7 +237,7 @@ class DistributionClass:
                         target: torch.Tensor,
                         start_values: List[float],
                         requires_grad: bool = False,
-                        ) -> Tuple[np.ndarray, np.ndarray]:
+                        ) -> Tuple[List[torch.Tensor], np.ndarray]:
         """
         Function that returns the predicted parameters and the loss.
 
@@ -357,7 +357,7 @@ class DistributionClass:
         pred_type : str
             Type of prediction:
             - "samples" draws n_samples from the predicted distribution.
-            - "quantile" calculates the quantiles from the predicted distribution.
+            - "quantiles" calculates the quantiles from the predicted distribution.
             - "parameters" returns the predicted distributional parameters.
             - "expectiles" returns the predicted expectiles.
         n_samples : int
@@ -598,6 +598,7 @@ class DistributionClass:
                     target: np.ndarray,
                     candidate_distributions: List,
                     max_iter: int = 100,
+                    n_samples: int = 1000,
                     plot: bool = False,
                     figure_size: tuple = (10, 5),
                     ) -> pd.DataFrame:
@@ -613,6 +614,8 @@ class DistributionClass:
             List of candidate distributions.
         max_iter: int
             Maximum number of iterations for the optimization.
+        n_samples: int
+            Number of samples to draw from the fitted distribution.
         plot: bool
             If True, a density plot of the actual and fitted distribution is created.
         figure_size: tuple
@@ -674,7 +677,7 @@ class DistributionClass:
             fitted_params = pd.DataFrame(fitted_params, columns=best_dist_sel.param_dict.keys())
             fitted_params.columns = best_dist_sel.param_dict.keys()
             dist_samples = best_dist_sel.draw_samples(fitted_params,
-                                                      n_samples=1000,
+                                                      n_samples=n_samples,
                                                       seed=123).values
 
             # Plot actual and fitted distribution
