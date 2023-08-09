@@ -19,7 +19,7 @@ We propose a new framework of LightGBM that predicts the entire conditional dist
 ## Features
 :white_check_mark: Estimation of all distributional parameters. <br/>
 :white_check_mark: Normalizing Flows allow modelling of complex and multi-modal distributions. <br/>
-:white_check_mark: Zero Adjusted and Inflated Distributions for modelling excess of zeros in the data. <br/>
+:white_check_mark: Zero-Adjusted and Zero-Inflated Distributions for modelling excess of zeros in the data. <br/>
 :white_check_mark: Automatic derivation of Gradients and Hessian of all distributional parameters using [PyTorch](https://pytorch.org/docs/stable/autograd.html). <br/>
 :white_check_mark: Automated hyper-parameter search, including pruning, is done via [Optuna](https://optuna.org/). <br/>
 :white_check_mark: The output of LightGBMLSS is explained using [SHapley Additive exPlanations](https://github.com/dsgibbons/shap). <br/>
