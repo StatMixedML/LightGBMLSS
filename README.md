@@ -14,7 +14,7 @@
 
 
 # LightGBMLSS - An extension of LightGBM to probabilistic modelling and prediction
-We introduce a comprehensive framework that models and predicts the full conditional distribution of univariate targets as a function of covariate. Choosing from a wide range of continuous, discrete, and mixed discrete-continuous distributions, modelling and predicting the entire conditional distribution greatly enhances the flexibility of LightGBM, as it allows to create probabilistic forecasts from which prediction intervals and quantiles of interest can be derived.
+We introduce a comprehensive framework that models and predicts the full conditional distribution of a univariate target as a function of covariate. Choosing from a wide range of continuous, discrete, and mixed discrete-continuous distributions, modelling and predicting the entire conditional distribution greatly enhances the flexibility of LightGBM, as it allows to create probabilistic forecasts from which prediction intervals and quantiles of interest can be derived.
 
 ## Features
 :white_check_mark: Estimation of all distributional parameters. <br/>
