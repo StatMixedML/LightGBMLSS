@@ -1,0 +1,41 @@
+site_name: LightGBMLSS
+site_url: https://github.com/StatMixedML/LightGBMLSS
+
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+  - attr_list
+  - md_in_html
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+
+plugins:
+  - search
+  - autorefs
+  - mkdocs-jupyter:
+      include_source: True
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_submodules: true
+
+nav:
+  - Home: index.md
+  - Distributional Modelling: dgbm.md
+  - Available Distributions: distributions.md
+  - Examples:
+    - Basic Walkthrough - Gaussian Regression: examples/Gaussian_Regression.ipynb
+    - Expectile Regression: examples/Expectile_Regression.ipynb
+    - Gamma Regression (Boston Housing Data): examples/Gamma_Regression_BostonHousing.ipynb
+    - How to Select a Univariate Distribution: examples/How_To_Select_A_Univariate_Distribution.ipynb
+    - Spline Flow Regression: examples/SplineFlow_Regression.ipynb
+    - Zero-Adjusted Gamma Regression: examples/ZAGamma_Regression.ipynb
+  - API Docs: api.md
