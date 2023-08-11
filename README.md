@@ -3,17 +3,18 @@
 ![Python Version](https://img.shields.io/badge/python-3.9%20|%203.10-lightblue.svg)
 ![GitHub Release (with filter)](https://img.shields.io/github/v/release/StatMixedML/LightGBMLSS?color=lightblue&label=release)
 [![Github License](https://img.shields.io/badge/license-Apache%202.0-lightblue.svg)](https://opensource.org/licenses/Apache-2.0)
+<img src="https://github.com/StatMixedML/LightGBMLSS/actions/workflows/mkdocs.yaml/badge.svg" alt="Documentation status badge">
 <img src="https://github.com/StatMixedML/LightGBMLSS/workflows/unit-tests/badge.svg" alt="Unit test status badge">
 <img src="https://codecov.io/gh/StatMixedML/LightGBMLSS/branch/master/graph/badge.svg" alt="Code coverage status badge">
 
 </h4>
 
 #
-<img align="right" width="156.5223" height="181.3" src="../master/figures/LightGBMLSS.png">
+<img align="right" width="156.5223" height="181.3" src="figures/LightGBMLSS.png">
 
 
 # LightGBMLSS - An extension of LightGBM to probabilistic modelling and prediction
-We propose a new framework of LightGBM that predicts the entire conditional distribution of a univariate response variable. In particular, **LightGBMLSS** models all moments of a parametric distribution, i.e., mean, location, scale and shape (LSS), instead of the conditional mean only. Choosing from a wide range of continuous, discrete, and mixed discrete-continuous distributions, modelling and predicting the entire conditional distribution greatly enhances the flexibility of LightGBM, as it allows to create probabilistic forecasts from which prediction intervals and quantiles of interest can be derived.
+We introduce a comprehensive framework that models and predicts the full conditional distribution of univariate targets as a function of covariate. Choosing from a wide range of continuous, discrete, and mixed discrete-continuous distributions, modelling and predicting the entire conditional distribution greatly enhances the flexibility of LightGBM, as it allows to create probabilistic forecasts from which prediction intervals and quantiles of interest can be derived.
 
 ## Features
 :white_check_mark: Estimation of all distributional parameters. <br/>
@@ -46,48 +47,18 @@ Then, to install the shap-dependency, run
 pip install git+https://github.com/dsgibbons/shap.git
 ```
 
-## Available Distributions
-LightGBMLSS currently supports the following distributions.
+## `Available Distributions`
+Our framework is built upon PyTorch and Pyro, enabling users to harness a diverse set of distributional families. LightGBMLSS currently supports the [following distributions](https://statmixedml.github.io/LightGBMLSS/distributions/).
 
-| Distribution                                                                                                                         |   Usage                   |Type                                        | Support                         | Number of Parameters            |
-| :----------------------------------------------------------------------------------------------------------------------------------: |:------------------------: |:-------------------------------------:     | :-----------------------------: | :-----------------------------: | 
-| [Beta](https://pytorch.org/docs/stable/distributions.html#beta)                                                                      | `Beta()`                  | Continuous <br /> (Univariate)             | $y \in (0, 1)$                  | 2                               |
-| [Cauchy](https://pytorch.org/docs/stable/distributions.html#cauchy)                                                                  | `Cauchy()`                | Continuous <br /> (Univariate)             | $y \in (-\infty,\infty)$        | 2                               |
-| [Expectile](https://epub.ub.uni-muenchen.de/31542/1/1471082x14561155.pdf)                                                            | `Expectile()`             | Continuous <br /> (Univariate)             | $y \in (-\infty,\infty)$        | Number of expectiles            |
-| [Gamma](https://pytorch.org/docs/stable/distributions.html#gamma)                                                                    | `Gamma()`                 | Continuous <br /> (Univariate)             | $y \in (0, \infty)$             | 2                               |
-| [Gaussian](https://pytorch.org/docs/stable/distributions.html#normal)                                                                | `Gaussian()`              | Continuous <br /> (Univariate)             | $y \in (-\infty,\infty)$        | 2                               |
-| [Gumbel](https://pytorch.org/docs/stable/distributions.html#gumbel)                                                                  | `Gumbel()`                | Continuous <br /> (Univariate)             | $y \in (-\infty,\infty)$        | 2                               |
-| [Laplace](https://pytorch.org/docs/stable/distributions.html#laplace)                                                                | `Laplace()`               | Continuous <br /> (Univariate)             | $y \in (-\infty,\infty)$        | 2                               |
-| [LogNormal](https://pytorch.org/docs/stable/distributions.html#lognormal)                                                            | `LogNormal()`             | Continuous <br /> (Univariate)             | $y \in (0,\infty)$              | 2                               |
-| [Negative Binomial](https://pytorch.org/docs/stable/distributions.html#negativebinomial)                                             | `NegativeBinomial()`      | Discrete Count <br /> (Univariate)         | $y \in (0, 1, 2, 3, \ldots)$    | 2                               |
-| [Poisson](https://pytorch.org/docs/stable/distributions.html#poisson)                                                                | `Poisson()`               | Discrete Count <br /> (Univariate)         | $y \in (0, 1, 2, 3, \ldots)$    | 1                               |
-| [Spline Flow](https://docs.pyro.ai/en/stable/distributions.html#pyro.distributions.transforms.Spline)                                | `SplineFlow()`            | Continuous \& Discrete Count <br /> (Univariate)   | $y \in (-\infty,\infty)$ <br /> <br /> $y \in [0, \infty)$  <br  /> <br /> $y \in [0, 1]$  <br  />  <br /> $y \in (0, 1, 2, 3, \ldots)$ | 2xcount_bins + (count_bins-1) (order=quadratic)  <br  /> <br  />  3xcount_bins + (count_bins-1) (order=linear)                            |
-| [Student-T](https://pytorch.org/docs/stable/distributions.html#studentt)                                                             | `StudentT()`              | Continuous <br /> (Univariate)             | $y \in (-\infty,\infty)$        | 3                               |
-| [Weibull](https://pytorch.org/docs/stable/distributions.html#weibull)                                                                | `Weibull()`               | Continuous <br /> (Univariate)             | $y \in [0, \infty)$             | 2                               |
-| [Zero-Adjusted Beta](https://github.com/pyro-ppl/pyro/blob/dev/pyro/distributions/zero_inflated.py)                                  | `ZABeta()`                | Discrete-Continuous <br /> (Univariate)    | $y \in [0, 1)$                  | 3                               |
-| [Zero-Adjusted Gamma](https://github.com/pyro-ppl/pyro/blob/dev/pyro/distributions/zero_inflated.py)                                 | `ZAGamma()`               | Discrete-Continuous <br /> (Univariate)    | $y \in [0, \infty)$             | 3                               |
-| [Zero-Adjusted LogNormal](https://github.com/pyro-ppl/pyro/blob/dev/pyro/distributions/zero_inflated.py)                             | `ZALN()`                  | Discrete-Continuous <br /> (Univariate)    | $y \in [0, \infty)$             | 3                               |
-| [Zero-Inflated Negative Binomial](https://github.com/pyro-ppl/pyro/blob/dev/pyro/distributions/zero_inflated.py#L150)                | `ZINB()`                  | Discrete-Count <br /> (Univariate)         | $y \in [0, 1, 2, 3, \ldots)$    | 3                               |
-| [Zero-Inflated Poisson](https://github.com/pyro-ppl/pyro/blob/dev/pyro/distributions/zero_inflated.py#L121)                          | `ZIPoisson()`             | Discrete-Count <br /> (Univariate)         | $y \in [0, 1, 2, 3, \ldots)$    | 2                               |
+## `How to use`
+Please visit the [example section](https://statmixedml.github.io/LightGBMLSS/examples/Gaussian_Regression/) for guidance on how to use the framework.
 
-## Some Notes
-> ### Stabilization
-Since LightGBMLSS updates the parameter estimates by optimizing Gradients and Hessians, it is important that these are comparable in magnitude for all distributional parameters. Due to variability regarding the ranges, the estimation of Gradients and Hessians might become unstable so that LightGBMLSS might not converge or might converge very slowly. To mitigate these effects, we have implemented a stabilization of Gradients and Hessians. 
+## `Documentation`
+For more information and context, please visit the [documentation](https://statmixedml.github.io/LightGBMLSS/).
 
-For improved convergence, an alternative approach is to standardize the (continuous) response variable, such as dividing it by 100 (e.g., y/100). This approach proves especially valuable when the response range significantly differs from that of Gradients and Hessians. Nevertheless, it is essential to carefully evaluate and apply both the built-in stabilization and response standardization techniques in consideration of the specific dataset at hand.
+## `Feedback`
+We encourage you to provide feedback on how to enhance LightGBMLSS or request the implementation of additional distributions by opening a [new discussion](https://github.com/StatMixedML/LightGBMLSS/discussions).
 
-> ### Runtime
-Since LightGBMLSS is based on a *one vs. all estimation strategy*, where a separate tree is grown for each distributional parameter, it requires training ```[number of iterations] * [number of distributional parameters]``` trees. Hence, the runtime of LightGBMLSS is generally slightly higher for univariate distributions as compared to LightGBM, which requires training ```[number of iterations]``` trees only.
-
-## Feedback
-We encourage you to provide feedback on how to enhance LightGBMLSS or request the implementation of additional distributions by opening a new discussion.
-
-## Reference Paper
-März, A. and Kneib, T.: (2022) [*Distributional Gradient Boosting Machines*](https://arxiv.org/abs/2204.00778). <br/>
-März, Alexander (2019): [*XGBoostLSS - An extension of XGBoost to probabilistic forecasting*](https://arxiv.org/abs/1907.03178). 
-
-
-<!---
+## `Reference Paper`
 [![Arxiv link](https://img.shields.io/badge/arXiv-Distributional%20Gradient%20Boosting%20Machines-color=brightgreen)](https://arxiv.org/abs/2204.00778) <br/>
 [![Arxiv link](https://img.shields.io/badge/arXiv-XGBoostLSS%3A%20An%20extension%20of%20XGBoost%20to%20probabilistic%20forecasting-color=brightgreen)](https://arxiv.org/abs/1907.03178) <br/>
---->
