@@ -63,13 +63,6 @@ class LightGBMLSS:
         self.dist = dist             # Distribution object
         self.start_values = None     # Starting values for distributional parameters
 
-    def __getstate__(self):
-        state = self.__dict__.copy()  # Copy the object's state
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)  # Restore the object's state
-
     def set_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
         Set parameters for distributional model.
@@ -439,7 +432,7 @@ class LightGBMLSS:
         return opt_param.params
 
     def predict(self,
-                test_set: pd.DataFrame,
+                data: pd.DataFrame,
                 pred_type: str = "parameters",
                 n_samples: int = 1000,
                 quantiles: list = [0.1, 0.5, 0.9],
@@ -449,12 +442,12 @@ class LightGBMLSS:
 
         Arguments
         ---------
-        test_set : pd.DataFrame
-            Test data.
+        data : pd.DataFrame
+            Data to predict from.
         pred_type : str
             Type of prediction:
             - "samples" draws n_samples from the predicted distribution.
-            - "quantile" calculates the quantiles from the predicted distribution.
+            - "quantiles" calculates the quantiles from the predicted distribution.
             - "parameters" returns the predicted distributional parameters.
             - "expectiles" returns the predicted expectiles.
         n_samples : int
@@ -472,7 +465,7 @@ class LightGBMLSS:
 
         # Predict
         predt_df = self.dist.predict_dist(booster=self.booster,
-                                          test_set=test_set,
+                                          data=data,
                                           start_values=self.start_values,
                                           pred_type=pred_type,
                                           n_samples=n_samples,
