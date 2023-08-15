@@ -354,7 +354,7 @@ class DistributionClass:
 
     def generate_probabilities(self,
                                booster: lgb.Booster,
-                               test_set: pd.DataFrame,
+                               data: pd.DataFrame,
                                start_values: np.ndarray,
                                x: Optional[Union[torch.Tensor, list, np.ndarray]] = None,
                                y: Optional[Union[torch.Tensor, list, np.ndarray]] = None) -> pd.DataFrame:
@@ -390,7 +390,7 @@ class DistributionClass:
             column_names = ['likelihood']
         else:
             raise Exception('Either x or y must be provided')
-        predt_params = self.predict_dist(booster=booster, test_set=test_set,
+        predt_params = self.predict_dist(booster=booster, data=data,
                                          start_values=start_values, pred_type='parameters')
         dist_pred = self.initialize_distribution(predt_params)
         probabilities = dist_pred.log_prob(values).exp().T
