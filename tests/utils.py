@@ -188,6 +188,14 @@ class BaseTestClass:
     def dist_class(self, request):
         return LightGBMLSS(request.param())
 
+    @pytest.fixture(
+        params=get_distribution_classes() +
+               get_distribution_classes(discrete=True) +
+               get_distribution_classes(continuous=True)
+    )
+    def dist_class_univariate_continuous_discrete(self, request):
+        return LightGBMLSS(request.param())
+
     @pytest.fixture(params=get_distribution_classes(flow=True))
     def flow_class(self, request):
         return LightGBMLSS(request.param())
