@@ -16,7 +16,7 @@
 # LightGBMLSS - An extension of LightGBM to probabilistic modelling and prediction
 We introduce a comprehensive framework that models and predicts the full conditional distribution of a univariate target as a function of covariate. Choosing from a wide range of continuous, discrete, and mixed discrete-continuous distributions, modelling and predicting the entire conditional distribution greatly enhances the flexibility of LightGBM, as it allows to create probabilistic forecasts from which prediction intervals and quantiles of interest can be derived.
 
-## Features
+## `Features`
 :white_check_mark: Estimation of all distributional parameters. <br/>
 :white_check_mark: Normalizing Flows allow modelling of complex and multi-modal distributions. <br/>
 :white_check_mark: Zero-Adjusted and Zero-Inflated Distributions for modelling excess of zeros in the data. <br/>
@@ -26,7 +26,7 @@ We introduce a comprehensive framework that models and predicts the full conditi
 :white_check_mark: LightGBMLSS provides full compatibility with all the features and functionality of LightGBM. <br/>
 :white_check_mark: LightGBMLSS is available in Python. <br/>
 
-## News
+## `News`
 :boom: [2023-07-20] Release of v0.3.0 introduces Normalizing Flows. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
 :boom: [2023-06-22] Release of v0.2.2. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
 :boom: [2023-06-15] LightGBMLSS now supports Zero-Inflated and Zero-Adjusted Distributions. <br/>
@@ -37,7 +37,7 @@ We introduce a comprehensive framework that models and predicts the full conditi
 :boom: [2022-01-04] LightGBMLSS is initialized with suitable starting values to improve convergence of estimation. <br/>
 :boom: [2022-01-04] LightGBMLSS v0.1.0 is released!
 
-## Installation
+## `Installation`
 To install LightGBMLSS please first run
 ```python
 pip install git+https://github.com/StatMixedML/LightGBMLSS.git
