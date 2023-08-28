@@ -28,7 +28,7 @@ We introduce a comprehensive framework that models and predicts the full conditi
 :white_check_mark: LightGBMLSS is available in Python. <br/>
 
 ## `News`
-:boom: [2023-08-25] Release of v0.4.0 introduces Mixture-Densities. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
+:boom: [2023-08-28] Release of v0.4.0 introduces Mixture-Densities. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
 :boom: [2023-07-20] Release of v0.3.0 introduces Normalizing Flows. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
 :boom: [2023-06-22] Release of v0.2.2. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
 :boom: [2023-06-15] LightGBMLSS now supports Zero-Inflated and Zero-Adjusted Distributions. <br/>
