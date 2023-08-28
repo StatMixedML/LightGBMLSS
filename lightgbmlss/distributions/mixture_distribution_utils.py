@@ -596,6 +596,13 @@ class MixtureDistributionClass:
             div = torch.where(div > torch.tensor(10000.0), torch.tensor(10000.0), div)
             stab_der = input_der / div
 
+        if type == "None":
+            stab_der = torch.nan_to_num(input_der,
+                                        nan=float(torch.nanmean(input_der)),
+                                        posinf=float(torch.nanmean(input_der)),
+                                        neginf=float(torch.nanmean(input_der))
+                                        )
+
         return stab_der
 
     def dist_select(self,
