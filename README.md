@@ -19,6 +19,7 @@ We introduce a comprehensive framework that models and predicts the full conditi
 ## `Features`
 :white_check_mark: Estimation of all distributional parameters. <br/>
 :white_check_mark: Normalizing Flows allow modelling of complex and multi-modal distributions. <br/>
+:white_check_mark: Mixture-Densities can model a diverse range of data characteristics. <br/>
 :white_check_mark: Zero-Adjusted and Zero-Inflated Distributions for modelling excess of zeros in the data. <br/>
 :white_check_mark: Automatic derivation of Gradients and Hessian of all distributional parameters using [PyTorch](https://pytorch.org/docs/stable/autograd.html). <br/>
 :white_check_mark: Automated hyper-parameter search, including pruning, is done via [Optuna](https://optuna.org/). <br/>
@@ -27,6 +28,7 @@ We introduce a comprehensive framework that models and predicts the full conditi
 :white_check_mark: LightGBMLSS is available in Python. <br/>
 
 ## `News`
+:boom: [2023-08-25] Release of v0.4.0 introduces Mixture-Densities. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
 :boom: [2023-07-20] Release of v0.3.0 introduces Normalizing Flows. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
 :boom: [2023-06-22] Release of v0.2.2. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
 :boom: [2023-06-15] LightGBMLSS now supports Zero-Inflated and Zero-Adjusted Distributions. <br/>
