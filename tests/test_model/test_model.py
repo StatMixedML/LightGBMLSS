@@ -1,6 +1,8 @@
 from lightgbmlss.model import *
 from lightgbmlss.distributions.Gaussian import *
+from lightgbmlss.distributions.Mixture import *
 from lightgbmlss.distributions.Expectile import *
+from lightgbmlss.distributions.SplineFlow import *
 from lightgbmlss.datasets.data_loader import load_simulated_gaussian_data
 import pytest
 from pytest import approx
@@ -21,6 +23,20 @@ def univariate_data():
 @pytest.fixture
 def univariate_lgblss():
     return LightGBMLSS(Gaussian())
+
+
+@pytest.fixture
+def mixture_lgblss():
+    return LightGBMLSS(Mixture(Gaussian()))
+
+
+@pytest.fixture
+def flow_lgblss():
+    return LightGBMLSS(
+        SplineFlow(target_support="real",
+                   count_bins=2
+                   )
+    )
 
 
 @pytest.fixture
@@ -189,3 +205,27 @@ class TestClass:
                                         expectile="expectile_0.9",
                                         feature="x_true",
                                         plot_type="Feature_Importance")
+
+    def test_model_mixture_train(self, univariate_data, mixture_lgblss):
+        # Unpack
+        dtrain, _, _, _ = univariate_data
+        params, n_rounds = {"eta": 0.1}, 10
+        lgblss = mixture_lgblss
+
+        # Train the model
+        lgblss.train(params, dtrain, n_rounds)
+
+        # Assertions
+        assert isinstance(lgblss.booster, lgb.Booster)
+
+    def test_model_flow_train(self, univariate_data, flow_lgblss):
+        # Unpack
+        dtrain, _, _, _ = univariate_data
+        params, n_rounds = {"eta": 0.1}, 10
+        lgblss = flow_lgblss
+
+        # Train the model
+        lgblss.train(params, dtrain, n_rounds)
+
+        # Assertions
+        assert isinstance(lgblss.booster, lgb.Booster)
