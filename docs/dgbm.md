@@ -38,11 +38,11 @@ for $i = 1, \ldots, N$, where $\mathcal{D}$ denotes a parametric distribution fo
 \eta_{k} = f_{k}(\mathbf{x}), \qquad k = 1, \ldots, K 
 \end{equation} 
 
-Within the original distributional regression framework, the functions $f_{k}(\cdot)$ usually represent a combination of linear and GAM-type predictors, which allows to estimate linear effects or categorical variables, as well as highly non-linear and spatial effects using a Spline-based basis function approach. The predictor specification $\eta_{k}$ is generic enough to use tree-based models as well, which allows us to extend XGBoost to a probabilistic framework.
+Within the original distributional regression framework, the functions $f_{k}(\cdot)$ usually represent a combination of linear and GAM-type predictors, which allows to estimate linear effects or categorical variables, as well as highly non-linear and spatial effects using a Spline-based basis function approach. The predictor specification $\eta_{k}$ is generic enough to use tree-based models as well, which allows us to extend LightGBM to a probabilistic framework.
 
 ## Mixture Distributions
 
-Mixture densities or mixture distributions offer an extension to the notion of traditional univariate distributions by allowing the observed data to be thought of as arising from multiple underlying processes. In its essence, a mixture distribution is a weighted combination of several component distributions, where each component contributes to the overall mixture distribution, with the weights indicating the importance of each component. For instance, if you imagine the observed data distribution having multiple modes, a mixture of Gaussians could be employed to capture each mode with a separate Gaussian distribution. 
+Mixture densities, or mixture distributions, offer an extension to the notion of traditional univariate distributions by allowing the observed data to be thought of as arising from multiple underlying processes. In its essence, a mixture distribution is a weighted combination of several component distributions, where each component contributes to the overall mixture distribution, with the weights indicating the importance of each component. For instance, if you imagine the observed data distribution having multiple modes, a mixture of Gaussians could be employed to capture each mode with a separate Gaussian distribution. 
 
 <center>
 <img src="https://raw.githubusercontent.com/StatMixedML/LightGBMLSS/master/docs/mixture.png" width=400/>
