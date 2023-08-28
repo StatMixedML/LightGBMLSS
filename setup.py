@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="lightgbmlss",
-    version="0.3.0",
+    version="0.4.0",
     description="LightGBMLSS - An extension of LightGBM to probabilistic modelling and prediction",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
@@ -28,6 +28,7 @@ setup(
         "scipy~=1.11.1",
         "tqdm~=4.65.0",
         "matplotlib~=3.7.2",
+        "ipython~=8.14.0",
         "ipython~=8.14.0",
     ],
     extras_require={
