@@ -9,7 +9,8 @@ import pandas as pd
 from tqdm import tqdm
 
 from typing import Any, Dict, Optional, List, Tuple
-from plotnine import *
+import matplotlib.pyplot as plt
+import seaborn as sns
 import warnings
 
 
@@ -598,7 +599,6 @@ class DistributionClass:
                     target: np.ndarray,
                     candidate_distributions: List,
                     max_iter: int = 100,
-                    n_samples: int = 1000,
                     plot: bool = False,
                     figure_size: tuple = (10, 5),
                     ) -> pd.DataFrame:
@@ -614,8 +614,6 @@ class DistributionClass:
             List of candidate distributions.
         max_iter: int
             Maximum number of iterations for the optimization.
-        n_samples: int
-            Number of samples to draw from the fitted distribution.
         plot: bool
             If True, a density plot of the actual and fitted distribution is created.
         figure_size: tuple
@@ -650,11 +648,11 @@ class DistributionClass:
                          }
                     )
                 dist_list.append(fit_df)
-                fit_df = pd.concat(dist_list).sort_values(by=self.loss_fn, ascending=True)
-                fit_df["rank"] = fit_df[self.loss_fn].rank().astype(int)
-                fit_df.set_index(fit_df["rank"], inplace=True)
                 pbar.update(1)
             pbar.set_description(f"Fitting of candidate distributions completed")
+            fit_df = pd.concat(dist_list).sort_values(by=self.loss_fn, ascending=True)
+            fit_df["rank"] = fit_df[self.loss_fn].rank().astype(int)
+            fit_df.set_index(fit_df["rank"], inplace=True)
 
         if plot:
             # Select best distribution
@@ -675,29 +673,19 @@ class DistributionClass:
                 axis=1,
             )
             fitted_params = pd.DataFrame(fitted_params, columns=best_dist_sel.param_dict.keys())
-            fitted_params.columns = best_dist_sel.param_dict.keys()
+            n_samples = np.max([10000, target.shape[0]])
+            n_samples = np.where(n_samples > 500000, 100000, n_samples)
             dist_samples = best_dist_sel.draw_samples(fitted_params,
                                                       n_samples=n_samples,
                                                       seed=123).values
 
             # Plot actual and fitted distribution
-            plot_df_actual = pd.DataFrame({"y": target.reshape(-1,), "type": "Actual"})
-            plot_df_fitted = pd.DataFrame({"y": dist_samples.reshape(-1,),
-                                           "type": f"Best-Fit: {best_dist['distribution'].values[0]}"})
-            plot_df = pd.concat([plot_df_actual, plot_df_fitted])
-
-            print(
-                ggplot(plot_df,
-                       aes(x="y",
-                           color="type")) +
-                geom_density(alpha=0.5) +
-                theme_bw(base_size=15) +
-                theme(figure_size=figure_size,
-                      legend_position="right",
-                      legend_title=element_blank(),
-                      plot_title=element_text(hjust=0.5)) +
-                labs(title=f"Actual vs. Fitted Density")
-            )
+            plt.figure(figsize=figure_size)
+            sns.kdeplot(target.reshape(-1, ), label="Actual")
+            sns.kdeplot(dist_samples.reshape(-1, ), label=f"Best-Fit: {best_dist['distribution'].values[0]}")
+            plt.legend()
+            plt.title("Actual vs. Best-Fit Density", fontweight="bold", fontsize=16)
+            plt.show()
 
         fit_df.drop(columns=["rank", "params"], inplace=True)
 
