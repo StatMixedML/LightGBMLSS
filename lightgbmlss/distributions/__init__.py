@@ -3,6 +3,7 @@
 from . import distribution_utils
 from . import flow_utils
 from . import zero_inflated
+from . import mixture_distribution_utils
 from . import Gaussian
 from . import StudentT
 from . import Gamma
@@ -21,3 +22,4 @@ from . import ZAGamma
 from . import ZABeta
 from . import ZALN
 from . import SplineFlow
+from . import Mixture
