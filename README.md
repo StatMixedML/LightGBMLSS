@@ -64,3 +64,9 @@ We encourage you to provide feedback on how to enhance LightGBMLSS or request th
 ## `Reference Paper`
 [![Arxiv link](https://img.shields.io/badge/arXiv-Distributional%20Gradient%20Boosting%20Machines-color=brightgreen)](https://arxiv.org/abs/2204.00778) <br/>
 [![Arxiv link](https://img.shields.io/badge/arXiv-XGBoostLSS%3A%20An%20extension%20of%20XGBoost%20to%20probabilistic%20forecasting-color=brightgreen)](https://arxiv.org/abs/1907.03178) <br/>
+
+## `Star History`
+<a href="https://star-history.com/#StatMixedML/LightGBMLSS&Date">
+    <img src="https://api.star-history.com/svg?repos=StatMixedML/LightGBMLSS&type=Date" width="450">
+</a>
+
