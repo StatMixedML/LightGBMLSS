@@ -9,6 +9,8 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 
 import lightgbm as lgb
+
+from lightgbmlss.distributions.distribution_utils import DistributionClass
 from lightgbmlss.utils import *
 import optuna
 from optuna.samplers import TPESampler
@@ -59,7 +61,7 @@ class LightGBMLSS:
      start_values : np.ndarray
         Starting values for each distributional parameter.
     """
-    def __init__(self, dist):
+    def __init__(self, dist: DistributionClass):
         self.dist = dist             # Distribution object
         self.start_values = None     # Starting values for distributional parameters
 
@@ -168,10 +170,10 @@ class LightGBMLSS:
         if valid_sets is not None:
             valid_sets = self.set_valid_margin(valid_sets, self.start_values)
 
+        params['objective'] = self.dist.objective_fn
         self.booster = lgb.train(params,
                                  train_set,
                                  num_boost_round=num_boost_round,
-                                 fobj=self.dist.objective_fn,
                                  feval=self.dist.metric_fn,
                                  valid_sets=valid_sets,
                                  valid_names=valid_names,
@@ -263,9 +265,9 @@ class LightGBMLSS:
         self.set_params(params)
         self.set_init_score(train_set)
 
+        params['objective'] = self.dist.objective_fn
         self.bstLSS_cv = lgb.cv(params,
                                 train_set,
-                                fobj=self.dist.objective_fn,
                                 feval=self.dist.metric_fn,
                                 num_boost_round=num_boost_round,
                                 folds=folds,
@@ -389,13 +391,13 @@ class LightGBMLSS:
                                           callbacks=[pruning_callback, early_stopping_callback],
                                           seed=seed,
                                           )
-
+            print(lgblss_param_tuning)
             # Extract the optimal number of boosting rounds
-            opt_rounds = np.argmin(np.array(lgblss_param_tuning[f"{self.dist.loss_fn}-mean"])) + 1
+            opt_rounds = np.argmin(np.array(lgblss_param_tuning[f"valid {self.dist.loss_fn}-mean"])) + 1
             trial.set_user_attr("opt_round", int(opt_rounds))
 
             # Extract the best score
-            best_score = np.min(np.array(lgblss_param_tuning[f"{self.dist.loss_fn}-mean"]))
+            best_score = np.min(np.array(lgblss_param_tuning[f"valid {self.dist.loss_fn}-mean"]))
 
             return best_score
 

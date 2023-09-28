@@ -16,10 +16,10 @@ setup(
     zip_safe=True,
     python_requires=">=3.9",
     install_requires=[
-        "lightgbm~=3.3.5",
+        "lightgbm~=4.1",
         "torch~=2.0.1",
         "pyro-ppl~=1.8.5",
-        "optuna~=3.2.0",
+        "optuna~=3.3.0",
         "properscoring~=0.1",
         "scikit-learn~=1.2.2",
         "numpy~=1.24.3",
