@@ -16,7 +16,7 @@ setup(
     zip_safe=True,
     python_requires=">=3.9",
     install_requires=[
-        "lightgbm~=4.1",
+        "lightgbm~=4.1.0",
         "torch~=2.0.1",
         "pyro-ppl~=1.8.5",
         "optuna~=3.3.0",
