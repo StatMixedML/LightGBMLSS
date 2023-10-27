@@ -52,7 +52,7 @@ pip install git+https://github.com/dsgibbons/shap.git
 ## `Available Distributions`
 Our framework is built upon PyTorch and Pyro, enabling users to harness a diverse set of distributional families. LightGBMLSS currently supports the [following distributions](https://statmixedml.github.io/LightGBMLSS/distributions/).
 
-## `How to use`
+## `How to Use`
 Please visit the [example section](https://statmixedml.github.io/LightGBMLSS/examples/Gaussian_Regression/) for guidance on how to use the framework.
 
 ## `Documentation`
@@ -61,7 +61,7 @@ For more information and context, please visit the [documentation](https://statm
 ## `Feedback`
 We encourage you to provide feedback on how to enhance LightGBMLSS or request the implementation of additional distributions by opening a [new discussion](https://github.com/StatMixedML/LightGBMLSS/discussions).
 
-## `How to cite`
+## `How to Cite`
 If you use LightGBMLSS in your research, please cite it as:
 
 ```bibtex
