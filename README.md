@@ -13,7 +13,7 @@
 <img align="right" width="156.5223" height="181.3" src="figures/LightGBMLSS.png">
 
 
-# LightGBMLSS - An extension of LightGBM to probabilistic modelling and prediction
+# LightGBMLSS - An extension of LightGBM to probabilistic modelling
 We introduce a comprehensive framework that models and predicts the full conditional distribution of a univariate target as a function of covariates. Choosing from a wide range of continuous, discrete, and mixed discrete-continuous distributions, modelling and predicting the entire conditional distribution greatly enhances the flexibility of LightGBM, as it allows to create probabilistic forecasts from which prediction intervals and quantiles of interest can be derived.
 
 ## `Features`
@@ -60,6 +60,19 @@ For more information and context, please visit the [documentation](https://statm
 
 ## `Feedback`
 We encourage you to provide feedback on how to enhance LightGBMLSS or request the implementation of additional distributions by opening a [new discussion](https://github.com/StatMixedML/LightGBMLSS/discussions).
+
+## `How to cite`
+If you use LightGBMLSS in your research, please cite it as:
+
+```bibtex
+@misc{Maerz2023,
+  author = {Alexander M\"arz},
+  title = {{LightGBMLSS: An Extension of LightGBM to Probabilistic Modelling}},
+  year = {2023},
+  note = {GitHub repository, Version 0.4.0},
+  howpublished = {\url{https://github.com/StatMixedML/LightGBMLSS}}
+}
+```
 
 ## `Reference Paper`
 [![Arxiv link](https://img.shields.io/badge/arXiv-Distributional%20Gradient%20Boosting%20Machines-color=brightgreen)](https://arxiv.org/abs/2204.00778) <br/>
