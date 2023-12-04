@@ -83,10 +83,9 @@ class LightGBMLSS:
         """
         params_adj = {"num_class": self.dist.n_dist_param,
                       "metric": "None",
-                      "objective": "None",
                       "random_seed": 123,
                       "verbose": -1,
-                      'objective': self.dist.objective_fn}
+                      "objective": self.dist.objective_fn}
         params.update(params_adj)
 
         return params
