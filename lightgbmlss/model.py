@@ -83,7 +83,8 @@ class LightGBMLSS:
                       "metric": "None",
                       "objective": "None",
                       "random_seed": 123,
-                      "verbose": -1}
+                      "verbose": -1,
+                      'objective': self.dist.objective_fn}
         params.update(params_adj)
 
         return params
@@ -170,7 +171,6 @@ class LightGBMLSS:
         if valid_sets is not None:
             valid_sets = self.set_valid_margin(valid_sets, self.start_values)
 
-        params['objective'] = self.dist.objective_fn
         self.booster = lgb.train(params,
                                  train_set,
                                  num_boost_round=num_boost_round,
@@ -265,7 +265,6 @@ class LightGBMLSS:
         self.set_params(params)
         self.set_init_score(train_set)
 
-        params['objective'] = self.dist.objective_fn
         self.bstLSS_cv = lgb.cv(params,
                                 train_set,
                                 feval=self.dist.metric_fn,
