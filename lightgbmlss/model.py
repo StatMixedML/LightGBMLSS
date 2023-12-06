@@ -11,6 +11,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 import lightgbm as lgb
 from lightgbmlss.distributions.distribution_utils import DistributionClass
 from lightgbmlss.logger import CustomLogger
+lgb.register_logger(CustomLogger())
 from lightgbmlss.utils import *
 import optuna
 from optuna.samplers import TPESampler
