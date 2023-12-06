@@ -9,7 +9,6 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 
 import lightgbm as lgb
-
 from lightgbmlss.distributions.distribution_utils import DistributionClass
 from lightgbmlss.logger import CustomLogger
 from lightgbmlss.utils import *
@@ -50,7 +49,6 @@ _LGBM_PreprocFunction = Callable[
     Tuple[Dataset, Dataset, Dict[str, Any]]
 ]
 
-lgb.register_logger(CustomLogger())
 
 class LightGBMLSS:
     """
@@ -83,9 +81,10 @@ class LightGBMLSS:
         """
         params_adj = {"num_class": self.dist.n_dist_param,
                       "metric": "None",
+                      "objective": self.dist.objective_fn,
                       "random_seed": 123,
-                      "verbose": -1,
-                      "objective": self.dist.objective_fn}
+                      "verbose": -1
+                      }
         params.update(params_adj)
 
         return params
@@ -391,7 +390,7 @@ class LightGBMLSS:
                                           callbacks=[pruning_callback, early_stopping_callback],
                                           seed=seed,
                                           )
-            print(lgblss_param_tuning)
+
             # Extract the optimal number of boosting rounds
             opt_rounds = np.argmin(np.array(lgblss_param_tuning[f"valid {self.dist.loss_fn}-mean"])) + 1
             trial.set_user_attr("opt_round", int(opt_rounds))
