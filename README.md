@@ -40,13 +40,13 @@ We introduce a comprehensive framework that models and predicts the full conditi
 :boom: [2022-01-04] LightGBMLSS v0.1.0 is released!
 
 ## `Installation`
-To install LightGBMLSS please first run
+To install the development version of LightGBMLSS, please use
 ```python
 pip install git+https://github.com/StatMixedML/LightGBMLSS.git
 ```
-Then, to install the shap-dependency, run
+For the PyPI version, please use
 ```python
-pip install git+https://github.com/dsgibbons/shap.git
+pip install lightgbmlss
 ```
 
 ## `Available Distributions`
