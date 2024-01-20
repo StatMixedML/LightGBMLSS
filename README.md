@@ -6,6 +6,7 @@
 <img src="https://github.com/StatMixedML/LightGBMLSS/actions/workflows/mkdocs.yaml/badge.svg" alt="Documentation status badge">
 <img src="https://github.com/StatMixedML/LightGBMLSS/workflows/unit-tests/badge.svg" alt="Unit test status badge">
 <img src="https://codecov.io/gh/StatMixedML/LightGBMLSS/branch/master/graph/badge.svg" alt="Code coverage status badge">
+![PyPI - Downloads](https://img.shields.io/pypi/dm/lightgbmlss?label=PyPI%20Downloads&color=green)
 
 </h4>
 
