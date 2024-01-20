@@ -2,11 +2,10 @@
 
 ![Python Version](https://img.shields.io/badge/python-3.10%20|%20%203.11-lightblue.svg)
 ![GitHub tag (with filter)](https://img.shields.io/github/v/tag/StatMixedML/LightGBMLSS?label=release&color=lightblue)
-[![Github License](https://img.shields.io/badge/license-Apache%202.0-lightblue.svg)](https://opensource.org/licenses/Apache-2.0)
 <img src="https://github.com/StatMixedML/LightGBMLSS/actions/workflows/mkdocs.yaml/badge.svg" alt="Documentation status badge">
 <img src="https://github.com/StatMixedML/LightGBMLSS/workflows/unit-tests/badge.svg" alt="Unit test status badge">
 <img src="https://codecov.io/gh/StatMixedML/LightGBMLSS/branch/master/graph/badge.svg" alt="Code coverage status badge">
-![PyPI - Downloads](https://img.shields.io/pypi/dm/lightgbmlss?label=PyPI%20Downloads&color=green)
+![Pepy Total Downlods](https://img.shields.io/pepy/dt/lightgbmlss?label=PyPI%20Downloads%2FMonth&color=green)
 
 </h4>
 
