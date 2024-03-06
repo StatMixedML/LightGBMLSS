@@ -170,7 +170,7 @@ class LightGBMLSS:
         self.set_init_score(train_set)
 
         if valid_sets is not None:
-            valid_sets = self.set_valid_margin(valid_sets, self.start_values)
+            valid_sets = self.set_valid_margin(valid_sets)
 
         self.booster = lgb.train(params,
                                  train_set,
@@ -551,7 +551,6 @@ class LightGBMLSS:
 
     def set_valid_margin(self,
                          valid_sets: list,
-                         start_values: np.ndarray
                          ) -> list:
         """
         Function that sets the base margin for the validation set.
@@ -559,16 +558,12 @@ class LightGBMLSS:
         Arguments
         ---------
         valid_sets : list
-            List of tuples containing the train and evaluation set.
-        valid_names: list
-            List of tuples containing the name of train and evaluation set.
-        start_values : np.ndarray
-            Array containing the start values for the distributional parameters.
+            List of tuples containing the evaluation set(s).
 
         Returns
         -------
         valid_sets : list
-            List of tuples containing the train and evaluation set.
+            List of tuples containing the evaluation set(s).
         """
         for valid_set in valid_sets:
             self.set_init_score(valid_set)
