@@ -170,6 +170,7 @@ class MixtureDistributionClass:
         """
         # Target
         target = torch.tensor(data.get_label().reshape(-1, 1), dtype=torch.float32)
+        n_obs = target.shape[0]
 
         # Start values (needed to replace NaNs in predt)
         start_values = data.get_init_score().reshape(-1, self.n_dist_param)[0, :].tolist()
@@ -178,7 +179,7 @@ class MixtureDistributionClass:
         is_higher_better = False
         _, loss = self.get_params_loss(predt, target.flatten(), start_values, requires_grad=False)
 
-        return self.loss_fn, loss, is_higher_better
+        return self.loss_fn, loss / n_obs, is_higher_better
 
     def create_mixture_distribution(self,
                                     params: List[torch.Tensor],

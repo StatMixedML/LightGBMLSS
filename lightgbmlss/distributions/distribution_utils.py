@@ -127,6 +127,7 @@ class DistributionClass:
         """
         # Target
         target = torch.tensor(data.get_label().reshape(-1, 1))
+        n_obs = target.shape[0]
 
         # Start values (needed to replace NaNs in predt)
         start_values = data.get_init_score().reshape(-1, self.n_dist_param)[0, :].tolist()
@@ -135,7 +136,7 @@ class DistributionClass:
         is_higher_better = False
         _, loss = self.get_params_loss(predt, target, start_values, requires_grad=False)
 
-        return self.loss_fn, loss, is_higher_better
+        return self.loss_fn, loss / n_obs, is_higher_better
 
     def loss_fn_start_values(self,
                              params: torch.Tensor,
