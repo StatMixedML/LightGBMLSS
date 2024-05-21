@@ -296,6 +296,7 @@ class LightGBMLSS:
             early_stopping_rounds=20,
             max_minutes=10,
             n_trials=None,
+            n_startup_trials=10,
             study_name=None,
             silence=False,
             seed=None,
@@ -331,6 +332,8 @@ class LightGBMLSS:
             Time budget in minutes, i.e., stop study after the given number of minutes.
         n_trials: int
             The number of trials. If this argument is set to None, there is no limitation on the number of trials.
+        n_startup_trials: int
+            The random sampling is used instead of the algorithm until the given number of trials finish in the same study.
         study_name: str
             Name of the hyperparameter study.
         silence: bool
@@ -420,7 +423,7 @@ class LightGBMLSS:
         else:
             sampler = TPESampler()
 
-        pruner = optuna.pruners.MedianPruner(n_startup_trials=10, n_warmup_steps=20)
+        pruner = optuna.pruners.MedianPruner(n_startup_trials=n_startup_trials, n_warmup_steps=20)
         study = optuna.create_study(sampler=sampler, pruner=pruner, direction="minimize", study_name=study_name)
         study.optimize(objective, n_trials=n_trials, timeout=60 * max_minutes, show_progress_bar=True)
 
