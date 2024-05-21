@@ -291,7 +291,7 @@ class LightGBMLSS:
             hp_dict: Dict,
             train_set: lgb.Dataset,
             num_boost_round=500,
-            folds: Optional[Union[Iterable[Tuple[np.ndarray, np.ndarray]], _LGBMBaseCrossValidator]] = None,
+            folds=None,
             nfold=10,
             early_stopping_rounds=20,
             max_minutes=10,
@@ -313,7 +313,7 @@ class LightGBMLSS:
             Training data.
         num_boost_round: int
             Number of boosting iterations.
-        folds : generator or iterator of (train_idx, test_idx) tuples, scikit-learn splitter object or None, optional (default=None)
+        folds: generator or iterator of (train_idx, test_idx) tuples, scikit-learn splitter object or None, optional (default=None)
             If generator or iterator, it should yield the train and test indices for each fold.
             If object, it should be one of the scikit-learn splitter classes
             (https://scikit-learn.org/stable/modules/classes.html#splitter-classes)
