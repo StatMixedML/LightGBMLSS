@@ -291,12 +291,13 @@ class LightGBMLSS:
             hp_dict: Dict,
             train_set: lgb.Dataset,
             num_boost_round=500,
-            folds=None,
+            folds: Optional[Union[Iterable[Tuple[np.ndarray, np.ndarray]], _LGBMBaseCrossValidator]] = None,
             nfold=10,
             early_stopping_rounds=20,
             max_minutes=10,
             n_trials=None,
             n_startup_trials=10,
+            multivariate=False,
             study_name=None,
             silence=False,
             seed=None,
@@ -334,6 +335,8 @@ class LightGBMLSS:
             The number of trials. If this argument is set to None, there is no limitation on the number of trials.
         n_startup_trials: int
             The random sampling is used instead of the algorithm until the given number of trials finish in the same study.
+        multivariate: bool
+            If this is True, the multivariate TPE is used when suggesting parameters. The multivariate TPE is reported to outperform the independent TPE.
         study_name: str
             Name of the hyperparameter study.
         silence: bool
@@ -419,7 +422,7 @@ class LightGBMLSS:
             optuna.logging.set_verbosity(optuna.logging.WARNING)
 
         if hp_seed is not None:
-            sampler = TPESampler(seed=hp_seed)
+            sampler = TPESampler(seed=hp_seed,multivariate=multivariate)
         else:
             sampler = TPESampler()
 
