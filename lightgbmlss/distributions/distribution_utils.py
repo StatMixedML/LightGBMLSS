@@ -213,7 +213,7 @@ class DistributionClass:
         def closure():
             optimizer.zero_grad()
             loss = self.loss_fn_start_values(params, target)
-            loss.backward()
+            loss.backward(retain_graph=True)
             return loss
 
         # Optimize parameters
@@ -295,6 +295,87 @@ class DistributionClass:
             loss = -torch.nansum(dist_fit.log_prob(target, self.tau))
 
         return predt, loss
+
+    def natural_gradient_step(self, grad: np.ndarray, fim: np.ndarray) -> np.ndarray:
+        # Solve the linear system to get the natural gradient
+        fim_inv = 1.0 / np.diag(fim)
+        natural_grad = np.dot(fim_inv, grad)
+        return natural_grad
+
+    def natural_gradient_objective(self, predt: np.ndarray, data: lgb.Dataset) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Function to compute the natural gradient and hessian.
+
+        Arguments
+        ---------
+        predt: np.ndarray
+            Predicted values.
+        dtrain: lgb.Dataset
+
+        Returns
+        -------
+        natural_grad: np.ndarray
+            Natural gradient.
+        hess: np.ndarray
+            Hessian.
+        """ 
+        grad, hess = self.objective_fn(predt, data)
+        fim = self.compute_fisher_information_matrix(predt, data)
+        natural_grad = self.natural_gradient_step(grad, fim)
+        return natural_grad, hess
+
+    def d_score(self, predt: np.ndarray, target: torch.Tensor) -> np.ndarray:
+        """
+        Function to compute the gradient of the score function with respect to distribution parameters.
+
+        Arguments
+        ---------
+        predt: np.ndarray
+            Predicted values.
+        target: torch.Tensor
+            Target values.
+
+        Returns
+        -------
+        grad: np.ndarray
+            Gradient of the score function.
+        """
+        dist_fit = self.distribution(*[response_fn(predt[:, i].reshape(-1, 1)) for i, response_fn in enumerate(self.param_dict.values())])
+        
+        # Compute log probability
+        log_prob = dist_fit.log_prob(target)
+        
+        # Compute gradient
+        grads = [autograd(log_prob.sum(), inputs=predt[i], create_graph=False, retain_graph=True)[0].numpy() for i in range(self.n_dist_param)]
+        
+        # Stack gradients into array
+        grad = np.stack(grads, axis=-1)
+        
+        return grad
+
+    def compute_fisher_information_matrix(self, predt: np.ndarray, data: lgb.Dataset) -> np.ndarray:
+        """
+        Compute the Fisher Information Matrix (FIM) for the given predictions and data.
+
+        Arguments
+        ---------
+        predt: np.ndarray
+            Predicted values.
+        data: lgb.Dataset
+            Dataset used for training.
+
+        Returns
+        -------
+        fim: np.ndarray
+            Fisher Information Matrix.
+        """
+        # Target
+        target = torch.tensor(data.get_label().reshape(-1, 1))
+    
+        # Calculate the Fisher Information Matrix (FIM)
+        grads = np.stack([self.d_score(predt, target) for _ in range(100)])
+        fim = np.mean(np.einsum("sik,sij->sijk", grads, grads), axis=0)
+        return grads, fim
 
     def draw_samples(self,
                      predt_params: pd.DataFrame,
@@ -449,7 +530,7 @@ class DistributionClass:
         """
         if self.loss_fn == "nll":
             # Gradient and Hessian
-            grad = autograd(loss, inputs=predt, create_graph=True)
+            grad = autograd(loss, inputs=predt, create_graph=True, retain_graph=True)
             hess = [autograd(grad[i].nansum(), inputs=predt[i], retain_graph=True)[0] for i in range(len(grad))]
         elif self.loss_fn == "crps":
             # Gradient and Hessian
