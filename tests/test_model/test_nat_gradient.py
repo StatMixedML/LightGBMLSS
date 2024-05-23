@@ -24,7 +24,8 @@ def test_lightgbmlss_with_natural_gradient():
     # Define the distribution and model
     dist = Gaussian(stabilization="None",
                         response_fn = "exp",
-                        loss_fn = "nll")
+                        loss_fn = "nll",
+                        natural_gradient = True)
     model = LightGBMLSS(dist=dist)
 
     # Define training parameters
