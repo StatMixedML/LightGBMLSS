@@ -33,7 +33,8 @@ class Gaussian(DistributionClass):
     def __init__(self,
                  stabilization: str = "None",
                  response_fn: str = "exp",
-                 loss_fn: str = "nll"
+                 loss_fn: str = "nll",
+                 natural_gradient: bool = False,
                  ):
 
         # Input Checks
@@ -63,5 +64,6 @@ class Gaussian(DistributionClass):
                          stabilization=stabilization,
                          param_dict=param_dict,
                          distribution_arg_names=list(param_dict.keys()),
-                         loss_fn=loss_fn
+                         loss_fn=loss_fn,
+                         natural_gradient=natural_gradient,
                          )
