@@ -41,7 +41,7 @@ def test_lightgbmlss_with_natural_gradient():
     model.train(
         params=params,
         train_set=train_data,
-        num_boost_round=1,
+        num_boost_round=5,
         valid_sets=[train_data, test_data],
     )
 

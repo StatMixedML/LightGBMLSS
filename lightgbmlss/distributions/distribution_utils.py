@@ -457,7 +457,7 @@ class DistributionClass:
                 modified_hess = hess.copy()
                 n = predt[0].shape[0]
                 fim_diag_2 = torch.ones(n,1) * 2
-                modified_hess[1] = - torch.tensor(fim_diag_2)
+                modified_hess[1] = - fim_diag_2.clone().detach()
                 grad = [grad[i] / modified_hess[i] for i in range(len(grad))]
             else:
                 pass
