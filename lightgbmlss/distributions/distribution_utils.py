@@ -452,6 +452,7 @@ class DistributionClass:
         if self.loss_fn == "nll":
             # Gradient and Hessian
             grad = autograd(loss, inputs=predt, create_graph=True)
+            #print(grad)
             hess = [autograd(grad[i].nansum(), inputs=predt[i], retain_graph=True)[0] for i in range(len(grad))]
             if self.natural_gradient:
                 modified_hess = hess.copy()
@@ -459,6 +460,7 @@ class DistributionClass:
                 fim_diag_2 = torch.ones(n,1) * 2
                 modified_hess[1] = - fim_diag_2.clone().detach()
                 grad = [grad[i] / modified_hess[i] for i in range(len(grad))]
+                #print(grad)
             else:
                 pass
         elif self.loss_fn == "crps":

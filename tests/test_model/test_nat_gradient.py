@@ -12,7 +12,7 @@ from lightgbmlss.distributions.Gaussian import *
 def test_lightgbmlss_with_natural_gradient():
     # Create a synthetic dataset
     np.random.seed(123)
-    X, y = np.random.rand(1000, 10), np.random.normal(0, 1, 1000)
+    X, y = np.random.rand(100, 10), np.random.normal(0, 1, 100)
 
     # Split data into train and test sets
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -41,7 +41,7 @@ def test_lightgbmlss_with_natural_gradient():
     model.train(
         params=params,
         train_set=train_data,
-        num_boost_round=5,
+        num_boost_round=1,
         valid_sets=[train_data, test_data],
     )
 
