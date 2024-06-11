@@ -291,10 +291,13 @@ class LightGBMLSS:
             hp_dict: Dict,
             train_set: lgb.Dataset,
             num_boost_round=500,
+            folds: Optional[Union[Iterable[Tuple[np.ndarray, np.ndarray]], _LGBMBaseCrossValidator]] = None,
             nfold=10,
             early_stopping_rounds=20,
             max_minutes=10,
             n_trials=None,
+            n_startup_trials=10,
+            multivariate=False,
             study_name=None,
             silence=False,
             seed=None,
@@ -311,6 +314,12 @@ class LightGBMLSS:
             Training data.
         num_boost_round: int
             Number of boosting iterations.
+        folds: generator or iterator of (train_idx, test_idx) tuples, scikit-learn splitter object or None, optional (default=None)
+            If generator or iterator, it should yield the train and test indices for each fold.
+            If object, it should be one of the scikit-learn splitter classes
+            (https://scikit-learn.org/stable/modules/classes.html#splitter-classes)
+            and have ``split`` method.
+            This argument has highest priority over other data split arguments.
         nfold: int
             Number of folds in CV.
         early_stopping_rounds: int
@@ -324,6 +333,10 @@ class LightGBMLSS:
             Time budget in minutes, i.e., stop study after the given number of minutes.
         n_trials: int
             The number of trials. If this argument is set to None, there is no limitation on the number of trials.
+        n_startup_trials: int
+            The random sampling is used instead of the algorithm until the given number of trials finish in the same study.
+        multivariate: bool
+            If this is True, the multivariate TPE is used when suggesting parameters. The multivariate TPE is reported to outperform the independent TPE.
         study_name: str
             Name of the hyperparameter study.
         silence: bool
@@ -387,6 +400,7 @@ class LightGBMLSS:
             lgblss_param_tuning = self.cv(hyper_params,
                                           train_set,
                                           num_boost_round=num_boost_round,
+                                          folds=folds,
                                           nfold=nfold,
                                           callbacks=[pruning_callback, early_stopping_callback],
                                           seed=seed,
@@ -408,11 +422,11 @@ class LightGBMLSS:
             optuna.logging.set_verbosity(optuna.logging.WARNING)
 
         if hp_seed is not None:
-            sampler = TPESampler(seed=hp_seed)
+            sampler = TPESampler(seed=hp_seed,multivariate=multivariate)
         else:
             sampler = TPESampler()
 
-        pruner = optuna.pruners.MedianPruner(n_startup_trials=10, n_warmup_steps=20)
+        pruner = optuna.pruners.MedianPruner(n_startup_trials=n_startup_trials, n_warmup_steps=20)
         study = optuna.create_study(sampler=sampler, pruner=pruner, direction="minimize", study_name=study_name)
         study.optimize(objective, n_trials=n_trials, timeout=60 * max_minutes, show_progress_bar=True)
 
