@@ -6,6 +6,7 @@ from lightgbmlss.distributions.SplineFlow import *
 from lightgbmlss.datasets.data_loader import load_simulated_gaussian_data
 import pytest
 from pytest import approx
+from sklearn.model_selection import KFold
 
 
 @pytest.fixture
@@ -128,6 +129,9 @@ class TestClass:
             dtrain,
             num_boost_round=10,
             nfold=5,
+            n_startup_trials=10,
+            folds=KFold(n_splits=10),
+            multivariate=True,
             early_stopping_rounds=20,
             max_minutes=10,
             n_trials=5,
