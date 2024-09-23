@@ -43,6 +43,7 @@ class DistributionClass:
     penalize_crossing: bool
         Whether to include a penalty term to discourage crossing of expectiles. Only used for Expectile distribution.
     """
+
     def __init__(self,
                  distribution: torch.distributions.Distribution = None,
                  univariate: bool = True,
@@ -375,51 +376,89 @@ class DistributionClass:
             Predictions.
         """
 
+        kwargs = dict()
+        if pred_type == "contributions":
+            kwargs["pred_contrib"] = True
+            n_outputs_per_dist = data.shape[1] + 1
+        else:
+            n_outputs_per_dist = 1
+
         predt = torch.tensor(
-            booster.predict(data, raw_score=True),
+            booster.predict(data, raw_score=True, **kwargs),
             dtype=torch.float32
-        ).reshape(-1, self.n_dist_param)
+        ).reshape(-1, self.n_dist_param * n_outputs_per_dist)
 
         # Set init_score as starting point for each distributional parameter.
         init_score_pred = torch.tensor(
-            np.ones(shape=(data.shape[0], 1))*start_values,
+            np.ones(shape=(data.shape[0], 1)) * start_values,
             dtype=torch.float32
         )
 
-        # The predictions don't include the init_score specified in creating the train data.
-        # Hence, it needs to be added manually with the corresponding transform for each distributional parameter.
-        dist_params_predt = np.concatenate(
-            [
-                response_fun(
-                    predt[:, i].reshape(-1, 1) + init_score_pred[:, i].reshape(-1, 1)).numpy()
-                for i, (dist_param, response_fun) in enumerate(self.param_dict.items())
-            ],
-            axis=1,
-        )
-        dist_params_predt = pd.DataFrame(dist_params_predt)
-        dist_params_predt.columns = self.param_dict.keys()
+        if pred_type == "contributions":
+            CONST_COL = "Const"
+            COLUMN_LEVELS = ["distribution_arg", "FeatureContribution"]
 
-        # Draw samples from predicted response distribution
-        pred_samples_df = self.draw_samples(predt_params=dist_params_predt,
-                                            n_samples=n_samples,
-                                            seed=seed)
+            feature_columns = data.columns.tolist() + [CONST_COL]
+            contributions_predt = pd.DataFrame(
+                predt,
+                columns=pd.MultiIndex.from_product(
+                    [self.distribution_arg_names, feature_columns],
+                    names=COLUMN_LEVELS
+                ),
+                index=data.index,
+            )
 
-        if pred_type == "parameters":
-            return dist_params_predt
+            init_score_pred_df = pd.DataFrame(
+                init_score_pred,
+                columns=pd.MultiIndex.from_product(
+                    [self.distribution_arg_names, ["Const"]],
+                    names=COLUMN_LEVELS
+                ),
+                index=data.index
+            )
+            contributions_predt[init_score_pred_df.columns] = (
+                    contributions_predt[init_score_pred_df.columns] + init_score_pred_df
+            )
+            # Cant include response function on individual feature contributions
+            return contributions_predt
+        else:
+            # The predictions don't include the init_score specified in creating the train data.
+            # Hence, it needs to be added manually with the corresponding transform for each distributional parameter.
+            dist_params_predt = np.concatenate(
+                [
+                    response_fun(
+                        predt[:, i].reshape(-1, 1) + init_score_pred[:, i].reshape(-1, 1)).numpy()
+                    for i, (dist_param, response_fun) in enumerate(self.param_dict.items())
+                ],
+                axis=1,
+            )
+            dist_params_predt = pd.DataFrame(dist_params_predt)
+            dist_params_predt.columns = self.param_dict.keys()
 
-        elif pred_type == "expectiles":
-            return dist_params_predt
+            if pred_type == "parameters":
+                return dist_params_predt
 
-        elif pred_type == "samples":
-            return pred_samples_df
+            elif pred_type == "expectiles":
+                return dist_params_predt
+            else:
 
-        elif pred_type == "quantiles":
-            # Calculate quantiles from predicted response distribution
-            pred_quant_df = pred_samples_df.quantile(quantiles, axis=1).T
-            pred_quant_df.columns = [str("quant_") + str(quantiles[i]) for i in range(len(quantiles))]
-            if self.discrete:
-                pred_quant_df = pred_quant_df.astype(int)
-            return pred_quant_df
+                # Draw samples from predicted response distribution
+                pred_samples_df = self.draw_samples(predt_params=dist_params_predt,
+                                                    n_samples=n_samples,
+                                                    seed=seed)
+
+                if pred_type == "samples":
+                    return pred_samples_df
+
+                elif pred_type == "quantiles":
+                    # Calculate quantiles from predicted response distribution
+                    pred_quant_df = pred_samples_df.quantile(quantiles, axis=1).T
+                    pred_quant_df.columns = [str("quant_") + str(quantiles[i]) for i in range(len(quantiles))]
+                    if self.discrete:
+                        pred_quant_df = pred_quant_df.astype(int)
+                    return pred_quant_df
+                else:
+                    raise RuntimeError(f"{pred_type=} not supported")
 
     def compute_gradients_and_hessians(self,
                                        loss: torch.tensor,
@@ -635,7 +674,7 @@ class DistributionClass:
                 try:
                     loss, params = dist_sel.calculate_start_values(target=target.reshape(-1, 1), max_iter=max_iter)
                     fit_df = pd.DataFrame.from_dict(
-                        {self.loss_fn: loss.reshape(-1,),
+                        {self.loss_fn: loss.reshape(-1, ),
                          "distribution": str(dist_name),
                          "params": [params]
                          }

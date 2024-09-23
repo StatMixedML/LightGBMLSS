@@ -1,3 +1,5 @@
+import numpy as np
+
 from lightgbmlss.model import *
 from lightgbmlss.distributions.Gaussian import *
 from lightgbmlss.distributions.Mixture import *
@@ -6,6 +8,7 @@ from lightgbmlss.distributions.SplineFlow import *
 from lightgbmlss.datasets.data_loader import load_simulated_gaussian_data
 import pytest
 from pytest import approx
+from lightgbmlss.utils import identity_fn
 
 
 @pytest.fixture
@@ -109,7 +112,7 @@ class TestClass:
         # Assertions
         assert isinstance(lgblss.booster, lgb.Booster)
 
-    def test_model_hpo(self, univariate_data, univariate_lgblss,):
+    def test_model_hpo(self, univariate_data, univariate_lgblss, ):
         # Unpack
         dtrain, _, _, _ = univariate_data
         lgblss = univariate_lgblss
@@ -155,6 +158,7 @@ class TestClass:
         pred_params = lgblss.predict(X_test, pred_type="parameters")
         pred_samples = lgblss.predict(X_test, pred_type="samples", n_samples=n_samples)
         pred_quantiles = lgblss.predict(X_test, pred_type="quantiles", quantiles=quantiles)
+        pred_contributions = lgblss.predict(X_test, pred_type="contributions")
 
         # Assertions
         assert isinstance(pred_params, (pd.DataFrame, type(None)))
@@ -172,6 +176,20 @@ class TestClass:
         assert not pred_quantiles.isna().any().any()
         assert not np.isinf(pred_quantiles).any().any()
         assert pred_quantiles.shape[1] == len(quantiles)
+
+        assert isinstance(pred_contributions, (pd.DataFrame, type(None)))
+        assert not pred_contributions.isna().any().any()
+        assert not np.isinf(pred_contributions).any().any()
+        assert (pred_contributions.shape[1] ==
+                lgblss.dist.n_dist_param * lgblss.dist.n_dist_param * (X_test.shape[1] + 1)
+                )
+
+        for key, func in lgblss.dist.param_dict.items():
+            if func == identity_fn:
+                assert np.allclose(
+                    pred_contributions.xs(key, level="distribution_arg", axis=1).sum(axis=1),
+                    pred_params[key], atol=1e-5
+                )
 
     def test_model_plot(self, univariate_data, univariate_lgblss, univariate_params):
         # Unpack
