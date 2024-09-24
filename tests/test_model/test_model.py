@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from lightgbmlss.model import *
 from lightgbmlss.distributions.Gaussian import *
@@ -184,12 +185,17 @@ class TestClass:
                 lgblss.dist.n_dist_param * lgblss.dist.n_dist_param * (X_test.shape[1] + 1)
                 )
 
-        for key, func in lgblss.dist.param_dict.items():
-            if func == identity_fn:
-                assert np.allclose(
-                    pred_contributions.xs(key, level="distribution_arg", axis=1).sum(axis=1),
-                    pred_params[key], atol=1e-5
-                )
+        for key, response_func in lgblss.dist.param_dict.items():
+            pred_contributions_combined = (
+                pd.Series(response_func(
+                    torch.tensor(
+                        pred_contributions.xs(key, level="distribution_arg", axis=1).sum(axis=1).values)
+                )))
+            assert np.allclose(
+                pred_contributions_combined,
+                pred_params[key], atol=1e-5
+            )
+
 
     def test_model_plot(self, univariate_data, univariate_lgblss, univariate_params):
         # Unpack
