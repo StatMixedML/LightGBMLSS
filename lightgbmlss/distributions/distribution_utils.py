@@ -14,6 +14,7 @@ import seaborn as sns
 import warnings
 
 
+
 class DistributionClass:
     """
     Generic class that contains general functions for univariate distributions.
@@ -396,7 +397,7 @@ class DistributionClass:
 
         if pred_type == "contributions":
             CONST_COL = "Const"
-            COLUMN_LEVELS = ["parameters", "FeatureContribution"]
+            COLUMN_LEVELS = ["parameters", "feature_contributions"]
 
             feature_columns = data.columns.tolist() + [CONST_COL]
             contributions_predt = pd.DataFrame(
@@ -432,8 +433,14 @@ class DistributionClass:
                 ],
                 axis=1,
             )
-            dist_params_predt = pd.DataFrame(dist_params_predt)
-            dist_params_predt.columns = self.param_dict.keys()
+            dist_params_predt = pd.DataFrame(
+                index=data.index,
+                data=dist_params_predt,
+                columns=pd.Index(
+                    self.param_dict.keys(),
+                    name=pred_type if pred_type == "expectiles" else "parameters"
+                )
+            )
 
             if pred_type == "parameters":
                 return dist_params_predt
@@ -446,7 +453,7 @@ class DistributionClass:
                 pred_samples_df = self.draw_samples(predt_params=dist_params_predt,
                                                     n_samples=n_samples,
                                                     seed=seed)
-
+                pred_samples_df.columns.name = "samples"
                 if pred_type == "samples":
                     return pred_samples_df
 
@@ -456,6 +463,7 @@ class DistributionClass:
                     pred_quant_df.columns = [str("quant_") + str(quantiles[i]) for i in range(len(quantiles))]
                     if self.discrete:
                         pred_quant_df = pred_quant_df.astype(int)
+                    pred_quant_df.columns.name = "quantiles"
                     return pred_quant_df
                 else:
                     raise RuntimeError(f"{pred_type=} not supported")

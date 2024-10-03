@@ -167,29 +167,35 @@ class TestClass:
         assert not np.isinf(pred_params).any().any()
         assert pred_params.shape[1] == lgblss.dist.n_dist_param
         assert approx(pred_params["loc"].mean(), abs=0.2) == 10.0
+        assert pred_params.columns.name == "parameters"
 
         assert isinstance(pred_samples, (pd.DataFrame, type(None)))
         assert not pred_samples.isna().any().any()
         assert not np.isinf(pred_samples).any().any()
         assert pred_samples.shape[1] == n_samples
+        assert pred_samples.columns.name == "samples"
 
         assert isinstance(pred_quantiles, (pd.DataFrame, type(None)))
         assert not pred_quantiles.isna().any().any()
         assert not np.isinf(pred_quantiles).any().any()
         assert pred_quantiles.shape[1] == len(quantiles)
+        assert pred_quantiles.columns.name == "quantiles"
 
         assert isinstance(pred_contributions, (pd.DataFrame, type(None)))
         assert not pred_contributions.isna().any().any()
         assert not np.isinf(pred_contributions).any().any()
         assert (pred_contributions.shape[1] ==
-                lgblss.dist.n_dist_param * lgblss.dist.n_dist_param * (X_test.shape[1] + 1)
+                lgblss.dist.n_dist_param * (X_test.shape[1] + 1)
                 )
 
+        assert pred_contributions.columns.names == ["parameters", "feature_contributions"]
+
         for key, response_func in lgblss.dist.param_dict.items():
+            # Sum contributions for each parameter and apply response function
             pred_contributions_combined = (
                 pd.Series(response_func(
                     torch.tensor(
-                        pred_contributions.xs(key, level="distribution_arg", axis=1).sum(axis=1).values)
+                        pred_contributions.xs(key, level="parameters", axis=1).sum(axis=1).values)
                 )))
             assert np.allclose(
                 pred_contributions_combined,
