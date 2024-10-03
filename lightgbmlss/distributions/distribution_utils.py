@@ -396,7 +396,7 @@ class DistributionClass:
 
         if pred_type == "contributions":
             CONST_COL = "Const"
-            COLUMN_LEVELS = ["distribution_arg", "FeatureContribution"]
+            COLUMN_LEVELS = ["parameters", "FeatureContribution"]
 
             feature_columns = data.columns.tolist() + [CONST_COL]
             contributions_predt = pd.DataFrame(
