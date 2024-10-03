@@ -452,6 +452,7 @@ class LightGBMLSS:
             - "quantiles" calculates the quantiles from the predicted distribution.
             - "parameters" returns the predicted distributional parameters.
             - "expectiles" returns the predicted expectiles.
+            - "contributions" returns constibutions of each feature and a constant by calling booster.predict(pred_contrib=True)
         n_samples : int
             Number of samples to draw from the predicted distribution.
         quantiles : List[float]
