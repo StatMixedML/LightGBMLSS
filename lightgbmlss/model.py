@@ -375,6 +375,13 @@ class LightGBMLSS:
                                                        log=param_log
                                                        )
                          })
+                else:
+                    raise ValueError("Invalid parameter type")
+                
+                if param_name == "clip_value":
+                    print(f"clip_value: {hyper_params[param_name]}")
+                    self.dist.clip_value = hyper_params[param_name]
+                    del hyper_params["clip_value"]
 
             # Add booster if not included in dictionary
             if "boosting" not in hyper_params.keys():
