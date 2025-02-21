@@ -35,7 +35,6 @@ class Gaussian(DistributionClass):
                  response_fn: str = "exp",
                  loss_fn: str = "nll",
                  natural_gradient: bool = False,
-                 quantile_clipping: bool = False,
                  clip_value: float = None,
                  ):
 
@@ -68,6 +67,5 @@ class Gaussian(DistributionClass):
                          distribution_arg_names=list(param_dict.keys()),
                          loss_fn=loss_fn,
                          natural_gradient=natural_gradient,
-                         quantile_clipping=quantile_clipping,  
                          clip_value=clip_value,  
                          )
