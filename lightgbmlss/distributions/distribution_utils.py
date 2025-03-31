@@ -46,13 +46,6 @@ class DistributionClass:
         of the Fisher Information Matrix (FIM), often leading to more stable and
         efficient convergence. When set to True, natural gradients are applied;
         otherwise, standard gradients are used.
-    quantile_clipping: bool 
-        Indicates whether to use quantile-based clipping for
-        gradients and Hessians during optimization. When set to True, the values of
-        gradients and Hessians are clipped based on specified quantile ranges (e.g.,
-        0.1 and 0.9), effectively removing extreme outliers while preserving most of
-        the data distribution. This approach dynamically adapts the clipping bounds
-        to the gradient distribution in each training step. 
     clip_value: float
         Defines the maximum absolute value for gradient and Hessian clipping.
         Clipping helps to stabilize training by capping extreme values,
@@ -76,7 +69,6 @@ class DistributionClass:
                  distribution_arg_names: List = None,
                  loss_fn: str = "nll",
                  natural_gradient: bool = False,
-                 quantile_clipping: bool = False,
                  clip_value: float = None,  
                  tau: Optional[List[torch.Tensor]] = None,
                  penalize_crossing: bool = False,
@@ -91,7 +83,6 @@ class DistributionClass:
         self.distribution_arg_names = distribution_arg_names
         self.loss_fn = loss_fn
         self.natural_gradient = natural_gradient
-        self.quantile_clipping = quantile_clipping
         self.clip_value = clip_value
         self.tau = tau
         self.penalize_crossing = penalize_crossing
@@ -165,7 +156,7 @@ class DistributionClass:
         is_higher_better = False
         _, loss = self.get_params_loss(predt, target, start_values, requires_grad=False)
 
-        return self.loss_fn, loss / n_obs, is_higher_better
+        return self.loss_fn, loss, is_higher_better
 
     def loss_fn_start_values(self,
                              params: torch.Tensor,
@@ -499,6 +490,7 @@ class DistributionClass:
             else:
                 pass
 
+
         # if self.quantile_clipping:
         #     # Clip Gradients and Hessians
         #     # Ensure gradients and Hessians are detached before computing quantiles
@@ -514,12 +506,12 @@ class DistributionClass:
         #     grad = [torch.clamp(g, min=grad_min, max=grad_max) for g in grad]
         #     hess = [torch.clamp(h, min=hess_min, max=hess_max) for h in hess]
         # elif
-        if self.clip_value is not None:
-            # Fixed-value Clipping
-            grad = [torch.clamp(g, min=-self.clip_value, max=self.clip_value) for g in grad]
-            hess = [torch.clamp(h, min=self.clip_value, max=1) for h in hess]
-        else:
-            pass
+        # if self.clip_value is not None:
+        #     # Fixed-value Clipping
+        #     grad = [torch.clamp(g, min=-self.clip_value, max=self.clip_value) for g in grad]
+        #     hess = [torch.clamp(h, min=self.clip_value, max=1) for h in hess]
+        # else:
+        #     pass
 
         # Stabilization of Derivatives
         if self.stabilization != "None":
