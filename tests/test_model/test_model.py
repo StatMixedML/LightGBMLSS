@@ -229,3 +229,111 @@ class TestClass:
 
         # Assertions
         assert isinstance(lgblss.booster, lgb.Booster)
+
+    @pytest.mark.parametrize("quantile_clipping, clip_value", [(True, 0.1)])
+    def test_lightgbmlss_with_quantile_gradient_clipping(self, univariate_data, quantile_clipping, clip_value):
+        dtrain, _, deval, X_test = univariate_data
+
+        # Define the distribution and model with gradient clipping
+        dist = Gaussian(stabilization="None",
+                        response_fn="exp",
+                        loss_fn="nll",
+                        natural_gradient=True,
+                        quantile_clipping=quantile_clipping,
+                        clip_value=clip_value)
+        model = LightGBMLSS(dist=dist)
+
+        # Define training parameters
+        params = {
+            "verbosity": -1,
+            "learning_rate": 0.1,
+            "num_leaves": 31,
+            "min_data_in_leaf": 20,
+            "feature_fraction": 0.9
+        }
+
+        # Train the model
+        model.train(
+            params=params,
+            train_set=dtrain,
+            num_boost_round=1,
+            valid_sets=[dtrain, deval],
+        )
+
+        # Predict and evaluate
+        y_pred = model.predict(pd.DataFrame(X_test))['loc'].values
+
+        # Assert that predictions are not NaN and have the correct shape
+        assert not np.isnan(y_pred).any(), "Predictions contain NaN values"
+        assert y_pred.shape == (X_test.shape[0],), "Predictions have incorrect shape"
+
+    @pytest.mark.parametrize("quantile_clipping, clip_value", [(False, 0.1)])
+    def test_lightgbmlss_with_gradient_clipping(self, univariate_data, quantile_clipping, clip_value):
+        dtrain, _, deval, X_test = univariate_data
+
+        # Define the distribution and model with gradient clipping
+        dist = Gaussian(stabilization="None",
+                        response_fn="exp",
+                        loss_fn="nll",
+                        natural_gradient=True,
+                        quantile_clipping=quantile_clipping,
+                        clip_value=clip_value)
+        model = LightGBMLSS(dist=dist)
+
+        # Define training parameters
+        params = {
+            "verbosity": -1,
+            "learning_rate": 0.1,
+            "num_leaves": 31,
+            "min_data_in_leaf": 20,
+            "feature_fraction": 0.9
+        }
+
+        # Train the model
+        model.train(
+            params=params,
+            train_set=dtrain,
+            num_boost_round=1,
+            valid_sets=[dtrain, deval],
+        )
+
+        # Predict and evaluate
+        y_pred = model.predict(pd.DataFrame(X_test))['loc'].values
+
+        # Assert that predictions are not NaN and have the correct shape
+        assert not np.isnan(y_pred).any(), "Predictions contain NaN values"
+        assert y_pred.shape == (X_test.shape[0],), "Predictions have incorrect shape"
+
+    def test_lightgbmlss_with_natural_gradient(self, univariate_data):
+        dtrain, _, deval, X_test = univariate_data
+
+        # Define the distribution and model
+        dist = Gaussian(stabilization="None",
+                        response_fn="exp",
+                        loss_fn="nll",
+                        natural_gradient=True)
+        model = LightGBMLSS(dist=dist)
+
+        # Define training parameters
+        params = {
+            "verbosity": -1,
+            "learning_rate": 0.1,
+            "num_leaves": 31,
+            "min_data_in_leaf": 20,
+            "feature_fraction": 0.9
+        }
+
+        # Train the model
+        model.train(
+            params=params,
+            train_set=dtrain,
+            num_boost_round=1,
+            valid_sets=[dtrain, deval],
+        )
+
+        # Predict and evaluate
+        y_pred = model.predict(pd.DataFrame(X_test))['loc'].values
+
+        # Assert that predictions are not NaN and have the correct shape
+        assert not np.isnan(y_pred).any(), "Predictions contain NaN values"
+        assert y_pred.shape == (X_test.shape[0],), "Predictions have incorrect shape"
