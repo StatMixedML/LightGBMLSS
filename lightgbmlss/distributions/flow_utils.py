@@ -61,6 +61,8 @@ class NormalizingFlowClass:
                  count_bins: Optional[int] = 8,
                  bound: Optional[float] = 3.0,
                  order: Optional[str] = "quadratic",
+                 degree: Optional[int] = 8,
+                 support_bounds: Optional[Tuple] = None,
                  n_dist_param: int = None,
                  param_dict: Dict[str, Any] = None,
                  distribution_arg_names: List = None,
@@ -76,6 +78,8 @@ class NormalizingFlowClass:
         self.count_bins = count_bins
         self.bound = bound
         self.order = order
+        self.degree = degree
+        self.support_bounds = support_bounds
         self.n_dist_param = n_dist_param
         self.param_dict = param_dict
         self.distribution_arg_names = distribution_arg_names
@@ -303,7 +307,7 @@ class NormalizingFlowClass:
 
         Returns
         -------
-        spline_flow: Transform
+        flow: Transform
             Normalizing Flow.
         """
 
@@ -311,17 +315,24 @@ class NormalizingFlowClass:
         loc, scale = torch.zeros(input_dim), torch.ones(input_dim)
         flow_dist = self.base_dist(loc, scale)
 
-        # Create Spline Transform
+        # Create Transform based on type
         torch.manual_seed(123)
-        spline_transform = self.flow_transform(input_dim,
-                                               count_bins=self.count_bins,
-                                               bound=self.bound,
-                                               order=self.order)
+        
+        # Check if this is a Bernstein flow (by checking for degree parameter)
+        if hasattr(self, 'degree') and self.degree is not None and hasattr(self, 'support_bounds'):
+            # This is a Bernstein flow
+            transform = self.flow_transform(degree=self.degree, support_bounds=self.support_bounds)
+        else:
+            # This is a Spline flow (original implementation)
+            transform = self.flow_transform(input_dim,
+                                          count_bins=self.count_bins,
+                                          bound=self.bound,
+                                          order=self.order)
 
         # Create Normalizing Flow
-        spline_flow = TransformedDistribution(flow_dist, [spline_transform, self.target_transform])
+        flow = TransformedDistribution(flow_dist, [transform, self.target_transform])
 
-        return spline_flow
+        return flow
 
     def replace_parameters(self,
                            params: torch.Tensor,
@@ -345,22 +356,31 @@ class NormalizingFlowClass:
             Normalizing Flow with estimated parameters.
         """
 
-        # Split parameters into list
-        if self.order == "quadratic":
-            params_list = torch.split(
-                params, [self.count_bins, self.count_bins, self.count_bins - 1],
-                dim=1)
-        elif self.order == "linear":
-            params_list = torch.split(
-                params, [self.count_bins, self.count_bins, self.count_bins - 1, self.count_bins],
-                dim=1)
+        # Split parameters based on flow type
+        if hasattr(self, 'degree') and self.degree is not None:
+            # Bernstein flow: degree+1 parameters (beta coefficients)
+            params_list = [params]  # All parameters as single tensor for Bernstein
+        else:
+            # Spline flow: split according to order
+            if self.order == "quadratic":
+                params_list = torch.split(
+                    params, [self.count_bins, self.count_bins, self.count_bins - 1],
+                    dim=1)
+            elif self.order == "linear":
+                params_list = torch.split(
+                    params, [self.count_bins, self.count_bins, self.count_bins - 1, self.count_bins],
+                    dim=1)
 
         # Replace parameters
-        for param, new_value in zip(flow_dist.transforms[0].parameters(), params_list):
-            param.data = new_value
-
-        # Get parameters (including require_grad=True)
-        params_list = list(flow_dist.transforms[0].parameters())
+        if hasattr(self, 'degree') and self.degree is not None:
+            # For Bernstein flow, replace the raw_betas parameter
+            flow_dist.transforms[0].raw_betas.data = params.squeeze()
+            params_list = [flow_dist.transforms[0].raw_betas]
+        else:
+            # For Spline flow, replace multiple parameters
+            for param, new_value in zip(flow_dist.transforms[0].parameters(), params_list):
+                param.data = new_value
+            params_list = list(flow_dist.transforms[0].parameters())
 
         return params_list, flow_dist
 
