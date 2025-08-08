@@ -87,6 +87,7 @@ def get_distribution_classes(univariate: bool = True,
     # Remove specific distributions
     distns_remove = [
         "SplineFlow",
+        "BernsteinFlow", 
         "Expectile",
         "Mixture"
     ]
@@ -170,12 +171,15 @@ def get_distribution_classes(univariate: bool = True,
         return multivar_distns
 
     elif flow:
-        distribution_name = "SplineFlow"
-        module = importlib.import_module(f"lightgbmlss.distributions.{distribution_name}")
-        # Get the class dynamically from the module
-        distribution_class = [getattr(module, distribution_name)]
+        flow_names = ["SplineFlow", "BernsteinFlow"]
+        distribution_classes = []
+        for distribution_name in flow_names:
+            module = importlib.import_module(f"lightgbmlss.distributions.{distribution_name}")
+            # Get the class dynamically from the module
+            distribution_class = getattr(module, distribution_name)
+            distribution_classes.append(distribution_class)
 
-        return distribution_class
+        return distribution_classes
 
     elif expectile:
         distribution_name = "Expectile"
