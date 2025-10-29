@@ -299,7 +299,8 @@ class LightGBMLSS:
             study_name=None,
             silence=False,
             seed=None,
-            hp_seed=None
+            hp_seed=None,
+            shuffle=False
     ):
         """
         Function to tune hyperparameters using optuna.
@@ -333,6 +334,9 @@ class LightGBMLSS:
             Seed used to generate the folds (passed to numpy.random.seed).
         hp_seed: int
             Seed for random number generator used in the Bayesian hyper-parameter search.
+        shuffle: bool
+            Whether to shuffle the data before splitting into folds. Set to False for time-series data
+            to preserve temporal order.
 
         Returns
         -------
@@ -378,6 +382,7 @@ class LightGBMLSS:
                     nfold=nfold,
                     callbacks=[pruning_callback, early_stopping_callback],
                     seed=seed,
+                    shuffle=shuffle,
                 )
 
                 opt_rounds = np.argmin(np.array(lgblss_param_tuning[f"valid {self.dist.loss_fn}-mean"])) + 1
