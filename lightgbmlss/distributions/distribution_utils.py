@@ -46,13 +46,6 @@ class DistributionClass:
         of the Fisher Information Matrix (FIM), often leading to more stable and
         efficient convergence. When set to True, natural gradients are applied;
         otherwise, standard gradients are used.
-    quantile_clipping: bool 
-        Indicates whether to use quantile-based clipping for
-        gradients and Hessians during optimization. When set to True, the values of
-        gradients and Hessians are clipped based on specified quantile ranges (e.g.,
-        0.1 and 0.9), effectively removing extreme outliers while preserving most of
-        the data distribution. This approach dynamically adapts the clipping bounds
-        to the gradient distribution in each training step. 
     clip_value: float
         Defines the maximum absolute value for gradient and Hessian clipping.
         Clipping helps to stabilize training by capping extreme values,
@@ -76,7 +69,6 @@ class DistributionClass:
                  distribution_arg_names: List = None,
                  loss_fn: str = "nll",
                  natural_gradient: bool = False,
-                 quantile_clipping: bool = False,
                  clip_value: float = None,  
                  tau: Optional[List[torch.Tensor]] = None,
                  penalize_crossing: bool = False,
@@ -91,7 +83,6 @@ class DistributionClass:
         self.distribution_arg_names = distribution_arg_names
         self.loss_fn = loss_fn
         self.natural_gradient = natural_gradient
-        self.quantile_clipping = quantile_clipping
         self.clip_value = clip_value
         self.tau = tau
         self.penalize_crossing = penalize_crossing
@@ -165,7 +156,7 @@ class DistributionClass:
         is_higher_better = False
         _, loss = self.get_params_loss(predt, target, start_values, requires_grad=False)
 
-        return self.loss_fn, loss / n_obs, is_higher_better
+        return self.loss_fn, loss, is_higher_better
 
     def loss_fn_start_values(self,
                              params: torch.Tensor,
@@ -449,6 +440,26 @@ class DistributionClass:
             if self.discrete:
                 pred_quant_df = pred_quant_df.astype(int)
             return pred_quant_df
+        
+    def compute_fisher_information_matrix(self, predt: List[torch.Tensor]) -> List[torch.Tensor]:
+        """
+        Compute Fisher Information Matrix (FIM) diagonal elements.
+        
+        This is a default implementation that returns ones (no scaling).
+        Override this method in specific distribution classes for proper FIM computation.
+        
+        Parameters
+        ----------
+        predt : List[torch.Tensor]
+            List of predicted distributional parameters (raw scale, before response functions).
+        
+        Returns
+        -------
+        fim : List[torch.Tensor]
+            List of FIM diagonal elements for each parameter.
+        """
+        # Default: return ones (no natural gradient scaling)
+        return [torch.ones_like(p) for p in predt]
 
     def compute_gradients_and_hessians(self,
                                        loss: torch.tensor,
@@ -479,15 +490,12 @@ class DistributionClass:
         if self.loss_fn == "nll":
             # Gradient and Hessian
             grad = autograd(loss, inputs=predt, create_graph=True)
-            #print(grad)
             hess = [autograd(grad[i].nansum(), inputs=predt[i], retain_graph=True)[0] for i in range(len(grad))]
             if self.natural_gradient:
-                modified_hess = hess.copy()
-                n = predt[0].shape[0]
-                fim_diag_2 = torch.ones(n,1) * 2
-                modified_hess[1] = fim_diag_2.clone().detach()
-                grad = [grad[i] / modified_hess[i] for i in range(len(grad))]
-                #print(grad)
+                # Compute Fisher Information Matrix
+                fim = self.compute_fisher_information_matrix(predt)
+                # Apply natural gradient: grad_natural = grad / FIM
+                grad = [grad[i] / (fim[i] + 1e-12) for i in range(len(grad))]
             else:
                 pass
         elif self.loss_fn == "crps":
@@ -498,28 +506,6 @@ class DistributionClass:
                 warnings.warn("Natural Gradient is not implemented for CRPS. Using standard Gradient instead.")
             else:
                 pass
-
-        # if self.quantile_clipping:
-        #     # Clip Gradients and Hessians
-        #     # Ensure gradients and Hessians are detached before computing quantiles
-        #     grad_tensor = torch.cat([g.detach() for g in grad])
-        #     hess_tensor = torch.cat([h.detach() for h in hess])
-
-        #     grad_min = torch.quantile(grad_tensor, self.clip_value)
-        #     grad_max = torch.quantile(grad_tensor, 1 - self.clip_value)
-        #     hess_min = torch.quantile(hess_tensor, self.clip_value)
-        #     hess_max = torch.quantile(hess_tensor, 1 - self.clip_value)
-
-        #     # Clip Gradients and Hessians
-        #     grad = [torch.clamp(g, min=grad_min, max=grad_max) for g in grad]
-        #     hess = [torch.clamp(h, min=hess_min, max=hess_max) for h in hess]
-        # elif
-        if self.clip_value is not None:
-            # Fixed-value Clipping
-            grad = [torch.clamp(g, min=-self.clip_value, max=self.clip_value) for g in grad]
-            hess = [torch.clamp(h, min=self.clip_value, max=1) for h in hess]
-        else:
-            pass
 
         # Stabilization of Derivatives
         if self.stabilization != "None":
