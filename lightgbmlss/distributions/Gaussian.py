@@ -69,3 +69,33 @@ class Gaussian(DistributionClass):
                          natural_gradient=natural_gradient,
                          clip_value=clip_value,  
                          )
+        
+    def compute_fisher_information_matrix(self, predt: List[torch.Tensor]) -> List[torch.Tensor]:
+        """
+        Compute Fisher Information Matrix diagonal for Gaussian distribution.
+        
+        For Gaussian with parameters [mu, log(sigma)]:
+        - FIM_mu = 1 / sigma^2
+        - FIM_log_sigma = 2 (constant for log-parameterization)
+        
+        Parameters
+        ----------
+        predt : List[torch.Tensor]
+            [mu_raw, log_sigma_raw]
+        
+        Returns
+        -------
+        fim : List[torch.Tensor]
+            [FIM_mu, FIM_log_sigma]
+        """
+        mu_raw, log_sigma_raw = predt[0], predt[1]
+        
+        # Transform to response scale
+        mu = self.param_dict["loc"](mu_raw)
+        sigma = self.param_dict["scale"](log_sigma_raw)
+        
+        # Compute FIM diagonal elements
+        fim_mu = 1.0 / (sigma ** 2 + 1e-12)
+        fim_log_sigma = torch.ones_like(log_sigma_raw) * 2.0
+        
+        return [fim_mu, fim_log_sigma]
