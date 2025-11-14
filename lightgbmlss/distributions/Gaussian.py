@@ -37,7 +37,6 @@ class Gaussian(DistributionClass):
                  response_fn: str = "exp",
                  loss_fn: str = "nll",
                  natural_gradient: bool = False,
-                 clip_value: float = None,
                  ):
 
         # Input Checks
@@ -69,7 +68,6 @@ class Gaussian(DistributionClass):
                          distribution_arg_names=list(param_dict.keys()),
                          loss_fn=loss_fn,
                          natural_gradient=natural_gradient,
-                         clip_value=clip_value,  
                          )
         
     def compute_fisher_information_matrix(self, predt: List[torch.Tensor]) -> List[torch.Tensor]:
