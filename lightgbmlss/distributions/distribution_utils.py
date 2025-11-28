@@ -35,13 +35,22 @@ class DistributionClass:
     distribution_arg_names: List
         List of distributional parameter names.
     loss_fn: str
-        Loss function. Options are "nll" (negative log-likelihood) or "crps" (continuous ranked probability score).
-        Note that if "crps" is used, the Hessian is set to 1, as the current CRPS version is not twice differentiable.
-        Hence, using the CRPS disregards any variation in the curvature of the loss function.
+        Loss function. Options are "nll" (negative log-likelihood) or "crps"
+        (continuous ranked probability score). Note that if "crps" is used, the
+        Hessian is set to 1, as the current CRPS version is not twice
+        differentiable. Hence, using the CRPS disregards any variation in the
+        curvature of the loss function.
+    natural_gradient: bool
+        Specifies whether to use natural gradients instead of standard gradients
+        for optimization. Natural gradients scale the gradients by the inverse
+        of the Fisher Information Matrix (FIM), often leading to more stable and
+        efficient convergence. When set to True, natural gradients are applied;
+        otherwise, standard gradients are used.
     tau: List
         List of expectiles. Only used for Expectile distributon.
     penalize_crossing: bool
-        Whether to include a penalty term to discourage crossing of expectiles. Only used for Expectile distribution.
+        Whether to include a penalty term to discourage crossing of expectiles.
+        Only used for Expectile distribution.
     """
     def __init__(self,
                  distribution: torch.distributions.Distribution = None,
@@ -52,6 +61,7 @@ class DistributionClass:
                  param_dict: Dict[str, Any] = None,
                  distribution_arg_names: List = None,
                  loss_fn: str = "nll",
+                 natural_gradient: bool = False,
                  tau: Optional[List[torch.Tensor]] = None,
                  penalize_crossing: bool = False,
                  ):
@@ -64,6 +74,7 @@ class DistributionClass:
         self.param_dict = param_dict
         self.distribution_arg_names = distribution_arg_names
         self.loss_fn = loss_fn
+        self.natural_gradient = natural_gradient
         self.tau = tau
         self.penalize_crossing = penalize_crossing
 
@@ -136,7 +147,7 @@ class DistributionClass:
         is_higher_better = False
         _, loss = self.get_params_loss(predt, target, start_values, requires_grad=False)
 
-        return self.loss_fn, loss / n_obs, is_higher_better
+        return self.loss_fn, loss, is_higher_better
 
     def loss_fn_start_values(self,
                              params: torch.Tensor,
@@ -420,6 +431,26 @@ class DistributionClass:
             if self.discrete:
                 pred_quant_df = pred_quant_df.astype(int)
             return pred_quant_df
+        
+    def compute_fisher_information_matrix(self, predt: List[torch.Tensor]) -> List[torch.Tensor]:
+        """
+        Compute Fisher Information Matrix (FIM) diagonal elements.
+        
+        This is a default implementation that returns ones (no scaling).
+        Override this method in specific distribution classes for proper FIM computation.
+        
+        Parameters
+        ----------
+        predt : List[torch.Tensor]
+            List of predicted distributional parameters (raw scale, before response functions).
+        
+        Returns
+        -------
+        fim : List[torch.Tensor]
+            List of FIM diagonal elements for each parameter.
+        """
+        # Default: return ones (no natural gradient scaling)
+        return [torch.ones_like(p) for p in predt]
 
     def compute_gradients_and_hessians(self,
                                        loss: torch.tensor,
@@ -451,34 +482,21 @@ class DistributionClass:
             # Gradient and Hessian
             grad = autograd(loss, inputs=predt, create_graph=True)
             hess = [autograd(grad[i].nansum(), inputs=predt[i], retain_graph=True)[0] for i in range(len(grad))]
+            if self.natural_gradient:
+                # Compute Fisher Information Matrix
+                fim = self.compute_fisher_information_matrix(predt)
+                # Apply natural gradient: grad_natural = grad / FIM
+                grad = [grad[i] / (fim[i] + 1e-12) for i in range(len(grad))]
+            else:
+                pass
         elif self.loss_fn == "crps":
             # Gradient and Hessian
             grad = autograd(loss, inputs=predt, create_graph=True)
             hess = [torch.ones_like(grad[i]) for i in range(len(grad))]
-
-            # # Approximation of Hessian
-            # step_size = 1e-6
-            # predt_upper = [
-            #     response_fn(predt[i] + step_size).reshape(-1, 1) for i, response_fn in
-            #     enumerate(self.param_dict.values())
-            # ]
-            # dist_kwargs_upper = dict(zip(self.distribution_arg_names, predt_upper))
-            # dist_fit_upper = self.distribution(**dist_kwargs_upper)
-            # dist_samples_upper = dist_fit_upper.rsample((30,)).squeeze(-1)
-            # loss_upper = torch.nansum(self.crps_score(self.target, dist_samples_upper))
-            #
-            # predt_lower = [
-            #     response_fn(predt[i] - step_size).reshape(-1, 1) for i, response_fn in
-            #     enumerate(self.param_dict.values())
-            # ]
-            # dist_kwargs_lower = dict(zip(self.distribution_arg_names, predt_lower))
-            # dist_fit_lower = self.distribution(**dist_kwargs_lower)
-            # dist_samples_lower = dist_fit_lower.rsample((30,)).squeeze(-1)
-            # loss_lower = torch.nansum(self.crps_score(self.target, dist_samples_lower))
-            #
-            # grad_upper = autograd(loss_upper, inputs=predt_upper)
-            # grad_lower = autograd(loss_lower, inputs=predt_lower)
-            # hess = [(grad_upper[i] - grad_lower[i]) / (2 * step_size) for i in range(len(grad))]
+            if self.natural_gradient:
+                warnings.warn("Natural Gradient is not implemented for CRPS. Using standard Gradient instead.")
+            else:
+                pass
 
         # Stabilization of Derivatives
         if self.stabilization != "None":
