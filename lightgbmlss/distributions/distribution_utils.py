@@ -9,8 +9,6 @@ import pandas as pd
 from tqdm import tqdm
 
 from typing import Any, Dict, Optional, List, Tuple
-import matplotlib.pyplot as plt
-import seaborn as sns
 import warnings
 
 
@@ -157,14 +155,14 @@ class DistributionClass:
         loss: torch.Tensor
             Loss value.
         """
+        # Replace NaNs and infinity values with 0.5
+        nan_inf_idx = torch.isnan(torch.stack(params)) | torch.isinf(torch.stack(params))
+        params = torch.where(nan_inf_idx, torch.tensor(0.5), torch.stack(params))
+
         # Transform parameters to response scale
         params = [
             response_fn(params[i].reshape(-1, 1)) for i, response_fn in enumerate(self.param_dict.values())
         ]
-
-        # Replace NaNs and infinity values with 0.5
-        nan_inf_idx = torch.isnan(torch.stack(params)) | torch.isinf(torch.stack(params))
-        params = torch.where(nan_inf_idx, torch.tensor(0.5), torch.stack(params))
 
         # Specify Distribution and Loss
         if self.tau is None:
@@ -656,6 +654,19 @@ class DistributionClass:
             fit_df.set_index(fit_df["rank"], inplace=True)
 
         if plot:
+            from skbase.utils.dependencies import _check_soft_dependencies
+
+            msg = (
+                "dist_select with plot=True requires 'matplotlib' and 'seaborn' "
+                "to be installed. Please install the packages to use this feature. "
+                "Installing via pip install lighgbmlss[all_extras] also installs "
+                "the required dependencies."
+            )
+            _check_soft_dependencies(["matplotlib", "seaborn"], msg=msg)
+
+            import matplotlib.pyplot as plt
+            import seaborn as sns
+
             # Select best distribution
             best_dist = fit_df[fit_df["rank"] == 1].reset_index(drop=True)
             for dist in candidate_distributions:

@@ -1,0 +1,86 @@
+[project]
+name = "lightgbmlss"
+version = "0.5.0"
+description = "LightGBMLSS - An extension of LightGBM to probabilistic modelling"
+readme = { file = "README.md", content-type = "text/markdown" }
+authors = [
+    { name = "Alexander März", email = "alex.maerz@gmx.net" }
+]
+license = { text = "Apache License 2.0" }
+requires-python = ">=3.10"
+classifiers = [
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX",
+  "Operating System :: Unix",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development",
+]
+# core dependencies of xgboostlss
+# this set should be kept minimal!
+dependencies = [
+    "lightgbm",
+    "torch>=2.1,<2.10",
+    "pyro-ppl>=1.8,<1.10",
+    "numpy>=1.26.0,<2.4",
+    "pandas>=2.0,<2.3",
+    "scipy>=1.11,<1.17",
+    "tqdm>=4.66,<4.68",
+    "scikit-learn>=1.4.0,<1.8.0",  # needed for LightGBM
+    "scikit-base",
+]
+
+[project.optional-dependencies]
+all_extras = [
+    "matplotlib>=3.8,<3.11",
+    "optuna>=3.5.0,<4.4",
+    "optuna-integration",
+    "seaborn>=0.13.0,<0.14.0",
+    'shap>=0.44,<0.49.1; python_version < "3.14"',
+    'ipython',
+]
+docs = [
+    "mkdocs",
+    "mkdocstrings[python]",
+    "mkdocs-jupyter"
+]
+notebooks = [
+    "plotnine>=0.12.0,<0.16.0",
+]
+test = [
+    "flake8",
+    "pytest",
+    "pytest-coverage",
+    "pytest-timeout",
+    "tox",
+]
+
+[project.urls]
+Homepage = "https://github.com/StatMixedML/XGBoostLSS"
+
+[tool.setuptools]
+include-package-data = true
+zip-safe = true
+
+[tool.setuptools.packages.find]
+exclude = ["docs", "tests*"]
+
+[tool.setuptools.package-data]
+xgboostlss = ["datasets/*.csv"]
+
+[build-system]
+# 2025-12-05 -- setuptools<81 due to use of pkg_resources in datasets.data_loader;
+# once we migrate off pkg_resources the upper bound constraint can be removed
+requires = ["setuptools>=61,<81", "wheel"]
+build-backend = "setuptools.build_meta"
