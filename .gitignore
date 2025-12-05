@@ -4,7 +4,12 @@ latex_distributions
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
-
+build/
+*.egg-info/
+.tox/
+.venv/
+.python-version
+.coverage
 
 # Jupyter Notebook
 .ipynb_checkpoints
