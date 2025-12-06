@@ -325,7 +325,12 @@ class DistributionClass:
             pred_params = torch.tensor(predt_params.values)
             dist_kwargs = {arg_name: param for arg_name, param in zip(self.distribution_arg_names, pred_params.T)}
             dist_pred = self.distribution(**dist_kwargs)
-            dist_samples = dist_pred.sample((n_samples,)).squeeze().detach().numpy().T
+            # Sample: shape is (n_samples, n_obs, *event_shape)
+            dist_samples = dist_pred.sample((n_samples,)).detach().numpy()
+            # Flatten any event dimensions but keep (n_samples, n_obs) as outer structure
+            dist_samples = dist_samples.reshape(n_samples, -1)  # (n_samples, n_obs)
+            dist_samples = dist_samples.T  # (n_obs, n_samples)
+
             dist_samples = pd.DataFrame(dist_samples)
             dist_samples.columns = [str("y_sample") + str(i) for i in range(dist_samples.shape[1])]
         else:

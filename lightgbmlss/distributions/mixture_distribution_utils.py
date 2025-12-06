@@ -404,7 +404,11 @@ class MixtureDistributionClass:
         pred_params = torch.tensor(predt_params.values).reshape(-1, self.n_dist_param)
         pred_params = torch.split(pred_params, self.M, dim=1)
         dist_pred = self.create_mixture_distribution(pred_params)
-        dist_samples = dist_pred.sample((n_samples,)).squeeze().detach().numpy().T
+        # sample (n_samples, n_obs, *event_shape)
+        dist_samples = dist_pred.sample((n_samples,)).detach().numpy()
+        # Flatten event dims, keep (n_samples, n_obs) as outer shape
+        dist_samples = dist_samples.reshape(n_samples, -1)  # (n_samples, n_obs)
+        dist_samples = dist_samples.T  # (n_obs, n_samples)
         dist_samples = pd.DataFrame(dist_samples)
         dist_samples.columns = [str("y_sample") + str(i) for i in range(dist_samples.shape[1])]
 
