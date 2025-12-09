@@ -397,8 +397,13 @@ class NormalizingFlowClass:
         # Replace parameters with estimated ones
         _, flow_dist_pred = self.replace_parameters(pred_params, flow_dist_pred)
 
-        # Draw samples
-        flow_samples = pd.DataFrame(flow_dist_pred.sample((n_samples,)).squeeze().detach().numpy().T)
+        # Draw samples (n_samples, n_obs, *event_shape)
+        flow_samples = flow_dist_pred.sample((n_samples,)).detach().numpy()
+        # Flatten event dims, keep (n_samples, n_obs) as outer shape
+        flow_samples = flow_samples.reshape(n_samples, -1)  # (n_samples, n_obs)
+        flow_samples = flow_samples.T  # (n_obs, n_samples)
+
+        flow_samples = pd.DataFrame(flow_samples)
         flow_samples.columns = [str("y_sample") + str(i) for i in range(flow_samples.shape[1])]
 
         if self.discrete:
