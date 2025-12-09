@@ -675,7 +675,7 @@ class MixtureDistributionClass:
             msg = (
                 "dist_select with plot=True requires 'matplotlib' and 'seaborn' "
                 "to be installed. Please install the packages to use this feature. "
-                "Installing via pip install lighgbmlss[all_extras] also installs "
+                "Installing via pip install lightgbmlss[all_extras] also installs "
                 "the required dependencies."
             )
             _check_soft_dependencies(["matplotlib", "seaborn"], msg=msg)

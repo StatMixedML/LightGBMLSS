@@ -528,7 +528,7 @@ class LightGBMLSS:
         from skbase.utils.dependencies import _check_soft_dependencies
 
         msg = (
-            "LightGBMLSS.plot requires 'shap' "
+            "LightGBMLSS.expectile_plot requires 'shap' "
             "to be installed. Please install the package to use this feature. "
             "Installing via pip install lightgbmlss[all_extras] also installs "
             "the required dependencies."
