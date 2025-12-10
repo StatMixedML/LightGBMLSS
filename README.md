@@ -1,11 +1,22 @@
 <h4 align="center">
 
+|  | **[Documentation](https://statmixedml.github.io/LightGBMLSS/)** · **[Release Notes](https://github.com/StatMixedML/LightGBMLSS/releases)** |
+|---|---|
+| **Open&#160;Source** | [![Apache 2.0](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/StatMixedML/LightGBMLSS/blob/master/LICENSE.txt) |
+| **CI/CD** | [![github-actions](https://img.shields.io/github/actions/workflow/status/statmixedml/lightgbmlss/unit-tests.yml?logo=github)](https://github.com/statmixedml/lightgbmlss/actions/workflows/unit-tests.yml) <img src="https://github.com/StatMixedML/LightGBMLSS/actions/workflows/mkdocs.yaml/badge.svg" alt="Documentation status badge"> |
+| **Code** |  [![!pypi](https://img.shields.io/pypi/v/lightgbmlss?color=orange)](https://pypi.org/project/lightgbmlss/) [![!python-versions](https://img.shields.io/pypi/pyversions/lightgbmlss)](https://www.python.org/) <img src="https://codecov.io/gh/StatMixedML/LightGBMLSS/branch/master/graph/badge.svg" alt="Code coverage status badge"> |
+| **Downloads** | ![Pepy Total Downlods](https://img.shields.io/pepy/dt/lightgbmlss?label=PyPI%20Downloads%2FMonth&color=green) |
+| **Citation** | [![Arxiv link](https://img.shields.io/badge/arXiv-LightGBMLSS%3A%20An%20extension%20of%20XGBoost%20to%20probabilistic%20forecasting-color=brightgreen)](https://arxiv.org/abs/1907.03178) |
+
+
+<!---
 ![Python Version](https://img.shields.io/badge/python-3.10%20|%20%203.11-lightblue.svg)
 ![GitHub tag (with filter)](https://img.shields.io/github/v/tag/StatMixedML/LightGBMLSS?label=release&color=lightblue)
 <img src="https://github.com/StatMixedML/LightGBMLSS/actions/workflows/mkdocs.yaml/badge.svg" alt="Documentation status badge">
 <img src="https://github.com/StatMixedML/LightGBMLSS/workflows/unit-tests/badge.svg" alt="Unit test status badge">
 <img src="https://codecov.io/gh/StatMixedML/LightGBMLSS/branch/master/graph/badge.svg" alt="Code coverage status badge">
 ![Pepy Total Downlods](https://img.shields.io/pepy/dt/lightgbmlss?label=PyPI%20Downloads%2FMonth&color=green)
+-->
 
 </h4>
 
