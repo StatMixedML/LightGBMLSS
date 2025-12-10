@@ -1,6 +1,6 @@
 [project]
 name = "lightgbmlss"
-version = "0.6.0"
+version = "0.5.0"
 description = "LightGBMLSS - An extension of LightGBM to probabilistic modelling"
 readme = { file = "README.md", content-type = "text/markdown" }
 authors = [
