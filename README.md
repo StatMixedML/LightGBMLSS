@@ -6,7 +6,7 @@
 | **CI/CD** | [![github-actions](https://img.shields.io/github/actions/workflow/status/statmixedml/lightgbmlss/unit-tests.yml?logo=github)](https://github.com/statmixedml/lightgbmlss/actions/workflows/unit-tests.yml) <img src="https://github.com/StatMixedML/LightGBMLSS/actions/workflows/mkdocs.yaml/badge.svg" alt="Documentation status badge"> |
 | **Code** |  [![!pypi](https://img.shields.io/pypi/v/lightgbmlss?color=orange)](https://pypi.org/project/lightgbmlss/) [![!python-versions](https://img.shields.io/pypi/pyversions/lightgbmlss)](https://www.python.org/) <img src="https://codecov.io/gh/StatMixedML/LightGBMLSS/branch/master/graph/badge.svg" alt="Code coverage status badge"> |
 | **Downloads** | ![Pepy Total Downlods](https://img.shields.io/pepy/dt/lightgbmlss?label=PyPI%20Downloads%2FMonth&color=green) |
-| **Citation** | [![Arxiv link](https://img.shields.io/badge/arXiv-LightGBMLSS%3A%20An%20extension%20of%20XGBoost%20to%20probabilistic%20forecasting-color=brightgreen)](https://arxiv.org/abs/1907.03178) |
+| **Citation** | [![Arxiv link](https://img.shields.io/badge/arXiv-XGBoostLSS%3A%20An%20extension%20of%20XGBoost%20to%20probabilistic%20forecasting-color=brightgreen)](https://arxiv.org/abs/1907.03178) |
 
 
 <!---
