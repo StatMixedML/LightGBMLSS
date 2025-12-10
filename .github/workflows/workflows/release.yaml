@@ -98,11 +98,11 @@ jobs:
       # Set wheel filename differently for Unix vs Windows
       - name: Get wheel filename (Unix)
         if: runner.os != 'Windows'
-        run: echo "WHEELNAME=$(ls ./wheelhouse/xgboostlss-*none-any.whl)" >> $GITHUB_ENV
+        run: echo "WHEELNAME=$(ls ./wheelhouse/lightgbmlss-*none-any.whl)" >> $GITHUB_ENV
 
       - name: Get wheel filename (Windows)
         if: runner.os == 'Windows'
-        run: echo "WHEELNAME=$(Get-ChildItem ./wheelhouse/xgboostlss-*none-any.whl)" >> $env:GITHUB_ENV
+        run: echo "WHEELNAME=$(Get-ChildItem ./wheelhouse/lightgbmlss-*none-any.whl)" >> $env:GITHUB_ENV
 
       - name: Install wheel and extras
         run: python -m pip install "${{ env.WHEELNAME }}[all_extras,test]"
@@ -128,4 +128,5 @@ jobs:
       - name: Publish package to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
+
           packages-dir: wheelhouse/
