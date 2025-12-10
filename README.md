@@ -80,7 +80,7 @@ If you use LightGBMLSS in your research, please cite it as:
   author = {Alexander M\"arz},
   title = {{LightGBMLSS: An Extension of LightGBM to Probabilistic Modelling}},
   year = {2023},
-  note = {GitHub repository, Version 0.4.0},
+  note = {GitHub repository, Version 0.6.0},
   howpublished = {\url{https://github.com/StatMixedML/LightGBMLSS}}
 }
 ```
