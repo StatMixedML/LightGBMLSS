@@ -8,7 +8,6 @@
 | **Downloads** | ![Pepy Total Downlods](https://img.shields.io/pepy/dt/lightgbmlss?label=PyPI%20Downloads%2FMonth&color=green) |
 | **Citation** | [![Arxiv link](https://img.shields.io/badge/arXiv-XGBoostLSS%3A%20An%20extension%20of%20XGBoost%20to%20probabilistic%20forecasting-color=brightgreen)](https://arxiv.org/abs/1907.03178) |
 
-
 <!---
 ![Python Version](https://img.shields.io/badge/python-3.10%20|%20%203.11-lightblue.svg)
 ![GitHub tag (with filter)](https://img.shields.io/github/v/tag/StatMixedML/LightGBMLSS?label=release&color=lightblue)
