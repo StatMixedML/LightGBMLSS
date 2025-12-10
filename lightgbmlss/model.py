@@ -1,3 +1,4 @@
+import torch
 import pandas as pd
 import numpy as np
 import collections
@@ -13,10 +14,6 @@ from lightgbmlss.distributions.distribution_utils import DistributionClass
 from lightgbmlss.logger import CustomLogger
 lgb.register_logger(CustomLogger())
 from lightgbmlss.utils import *
-import optuna
-from optuna.samplers import TPESampler
-from optuna.integration import LightGBMPruningCallback
-import shap
 
 from lightgbm.engine import CVBooster
 from lightgbm.basic import (Booster, Dataset)
@@ -115,8 +112,6 @@ class LightGBMLSS:
               valid_sets: Optional[List[Dataset]] = None,
               valid_names: Optional[List[str]] = None,
               init_model: Optional[Union[str, Path, Booster]] = None,
-              feature_name: _LGBM_FeatureNameConfiguration = 'auto',
-              categorical_feature: _LGBM_CategoricalFeatureConfiguration = 'auto',
               keep_training_booster: bool = False,
               callbacks: Optional[List[Callable]] = None
               ) -> Booster:
@@ -137,19 +132,6 @@ class LightGBMLSS:
             Names of ``valid_sets``.
         init_model : str, pathlib.Path, Booster or None, optional (default=None)
             Filename of LightGBM model or Booster instance used for continue training.
-        feature_name : list of str, or 'auto', optional (default="auto")
-            Feature names.
-            If 'auto' and data is pandas DataFrame, data columns names are used.
-        categorical_feature : list of str or int, or 'auto', optional (default="auto")
-            Categorical features.
-            If list of int, interpreted as indices.
-            If list of str, interpreted as feature names (need to specify ``feature_name`` as well).
-            If 'auto' and data is pandas DataFrame, pandas unordered categorical columns are used.
-            All values in categorical features will be cast to int32 and thus should be less than int32 max value (2147483647).
-            Large values could be memory consuming. Consider using consecutive integers starting from zero.
-            All negative values in categorical features will be treated as missing values.
-            The output cannot be monotonically constrained with respect to a categorical feature.
-            Floating point numbers in categorical features will be rounded towards 0.
         keep_training_booster : bool, optional (default=False)
             Whether the returned Booster will be used to keep training.
             If False, the returned value will be converted into _InnerPredictor before returning.
@@ -179,8 +161,6 @@ class LightGBMLSS:
                                  valid_sets=valid_sets,
                                  valid_names=valid_names,
                                  init_model=init_model,
-                                 feature_name=feature_name,
-                                 categorical_feature=categorical_feature,
                                  keep_training_booster=keep_training_booster,
                                  callbacks=callbacks)
 
@@ -193,8 +173,6 @@ class LightGBMLSS:
            stratified: bool = True,
            shuffle: bool = True,
            init_model: Optional[Union[str, Path, Booster]] = None,
-           feature_name: _LGBM_FeatureNameConfiguration = 'auto',
-           categorical_feature: _LGBM_CategoricalFeatureConfiguration = 'auto',
            fpreproc: Optional[_LGBM_PreprocFunction] = None,
            seed: int = 123,
            callbacks: Optional[List[Callable]] = None,
@@ -226,19 +204,6 @@ class LightGBMLSS:
             Whether to shuffle before splitting data.
         init_model : str, pathlib.Path, Booster or None, optional (default=None)
             Filename of LightGBM model or Booster instance used for continue training.
-        feature_name : list of str, or 'auto', optional (default="auto")
-            Feature names.
-            If 'auto' and data is pandas DataFrame, data columns names are used.
-        categorical_feature : list of str or int, or 'auto', optional (default="auto")
-            Categorical features.
-            If list of int, interpreted as indices.
-            If list of str, interpreted as feature names (need to specify ``feature_name`` as well).
-            If 'auto' and data is pandas DataFrame, pandas unordered categorical columns are used.
-            All values in categorical features will be cast to int32 and thus should be less than int32 max value (2147483647).
-            Large values could be memory consuming. Consider using consecutive integers starting from zero.
-            All negative values in categorical features will be treated as missing values.
-            The output cannot be monotonically constrained with respect to a categorical feature.
-            Floating point numbers in categorical features will be rounded towards 0.
         fpreproc : callable or None, optional (default=None)
             Preprocessing function that takes (dtrain, dtest, params)
             and returns transformed versions of those.
@@ -276,8 +241,6 @@ class LightGBMLSS:
                                 shuffle=False,
                                 metrics=None,
                                 init_model=init_model,
-                                feature_name=feature_name,
-                                categorical_feature=categorical_feature,
                                 fpreproc=fpreproc,
                                 seed=seed,
                                 callbacks=callbacks,
@@ -338,6 +301,19 @@ class LightGBMLSS:
         opt_params : dict
             Optimal hyper-parameters.
         """
+        from skbase.utils.dependencies import _check_soft_dependencies
+
+        msg = (
+            "LightGBMLSS.hyper_opt requires 'optuna' and 'optuna-integration' "
+            "to be installed. Please install the package to use this feature. "
+            "Installing via pip install lightgbmlss[all_extras] also installs "
+            "the required dependencies."
+        )
+        _check_soft_dependencies(["optuna"], msg=msg)
+
+        import optuna
+        from optuna.samplers import TPESampler
+        from optuna.integration import LightGBMPruningCallback
 
         def objective(trial):
 
@@ -500,6 +476,18 @@ class LightGBMLSS:
                 "Partial_Dependence" plots the partial dependence of the parameter on the feature.
                 "Feature_Importance" plots the feature importance of the parameter.
         """
+        from skbase.utils.dependencies import _check_soft_dependencies
+
+        msg = (
+            "LightGBMLSS.plot requires 'shap' "
+            "to be installed. Please install the package to use this feature. "
+            "Installing via pip install lightgbmlss[all_extras] also installs "
+            "the required dependencies."
+        )
+        _check_soft_dependencies(["shap"], msg=msg)
+
+        import shap
+
         shap.initjs()
         explainer = shap.TreeExplainer(self.booster)
         shap_values = explainer(X)
@@ -537,6 +525,17 @@ class LightGBMLSS:
             Specifies which SHapley-plot to visualize. Currently, "Partial_Dependence" and "Feature_Importance"
             are supported.
         """
+        from skbase.utils.dependencies import _check_soft_dependencies
+
+        msg = (
+            "LightGBMLSS.expectile_plot requires 'shap' "
+            "to be installed. Please install the package to use this feature. "
+            "Installing via pip install lightgbmlss[all_extras] also installs "
+            "the required dependencies."
+        )
+        _check_soft_dependencies(["shap"], msg=msg)
+
+        import shap
 
         shap.initjs()
         explainer = shap.TreeExplainer(self.booster)

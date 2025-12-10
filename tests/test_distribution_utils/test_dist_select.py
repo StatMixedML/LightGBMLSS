@@ -1,3 +1,6 @@
+import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
+
 from ..utils import BaseTestClass
 
 from lightgbmlss.distributions import (
@@ -42,6 +45,10 @@ class TestClass(BaseTestClass):
         assert not np.isnan(dist_df["nll"].values).any()
         assert not np.isinf(dist_df["nll"].values).any()
 
+    @pytest.mark.skipif(
+        not _check_soft_dependencies(["matplotlib", "seaborn"], severity="none"),
+        reason="matplotlib and seaborn are required to run this test."
+    )
     def test_univar_dist_select_plot(self):
         # Create data for testing
         target = np.array([0.2, 0.4, 0.6, 0.8]).reshape(-1, 1)
@@ -87,6 +94,10 @@ class TestClass(BaseTestClass):
         assert not np.isnan(dist_df["nll"].values).any()
         assert not np.isinf(dist_df["nll"].values).any()
 
+    @pytest.mark.skipif(
+        not _check_soft_dependencies(["matplotlib", "seaborn"], severity="none"),
+        reason="matplotlib and seaborn are required to run this test."
+    )
     def test_flow_select_plot(self):
         # Create data for testing
         target = np.array([0.2, 0.4, 0.6, 0.8]).reshape(-1, 1)
@@ -142,6 +153,10 @@ class TestClass(BaseTestClass):
         assert not np.isnan(dist_df["nll"].values).any()
         assert not np.isinf(dist_df["nll"].values).any()
 
+    @pytest.mark.skipif(
+        not _check_soft_dependencies(["matplotlib", "seaborn"], severity="none"),
+        reason="matplotlib and seaborn are required to run this test."
+    )
     def test_mixture_dist_select_plot(self):
         # Create data for testing
         target = np.array([0.2, 0.4, 0.6, 0.8]).reshape(-1, 1)

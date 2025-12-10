@@ -6,6 +6,7 @@ from lightgbmlss.distributions.SplineFlow import *
 from lightgbmlss.datasets.data_loader import load_simulated_gaussian_data
 import pytest
 from pytest import approx
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.fixture
@@ -109,6 +110,10 @@ class TestClass:
         # Assertions
         assert isinstance(lgblss.booster, lgb.Booster)
 
+    @pytest.mark.skipif(
+        not _check_soft_dependencies(["optuna"], severity="none"),
+        reason="optuna is required to run this test."
+    )
     def test_model_hpo(self, univariate_data, univariate_lgblss,):
         # Unpack
         dtrain, _, _, _ = univariate_data
@@ -173,6 +178,10 @@ class TestClass:
         assert not np.isinf(pred_quantiles).any().any()
         assert pred_quantiles.shape[1] == len(quantiles)
 
+    @pytest.mark.skipif(
+        not _check_soft_dependencies(["shap"], severity="none"),
+        reason="shap is required to run this test."
+    )
     def test_model_plot(self, univariate_data, univariate_lgblss, univariate_params):
         # Unpack
         dtrain, dtest, _, X_test = univariate_data
@@ -186,6 +195,10 @@ class TestClass:
         lgblss.plot(X_test, parameter="scale", feature="x_true", plot_type="Partial_Dependence")
         lgblss.plot(X_test, parameter="scale", feature="x_true", plot_type="Feature_Importance")
 
+    @pytest.mark.skipif(
+        not _check_soft_dependencies(["shap"], severity="none"),
+        reason="shap is required to run this test."
+    )
     def test_model_expectile_plot(self, univariate_data, expectile_lgblss, expectile_params):
         # Unpack
         dtrain, dtest, _, X_test = univariate_data
