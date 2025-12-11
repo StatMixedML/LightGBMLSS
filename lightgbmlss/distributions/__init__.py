@@ -23,3 +23,4 @@ from . import ZABeta
 from . import ZALN
 from . import SplineFlow
 from . import Mixture
+from . import Logistic
