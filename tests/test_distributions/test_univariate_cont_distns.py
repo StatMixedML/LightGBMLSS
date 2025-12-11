@@ -17,6 +17,16 @@ class TestClass(BaseTestClass):
         with pytest.raises(ValueError, match="Invalid loss function."):
             univariate_cont_dist(loss_fn="invalid_loss_fn")
 
+        # Test initialize parameter validation (TYPE CHECKS)
+        with pytest.raises(ValueError, match="Invalid initialize. Please choose from True or False."):
+            univariate_cont_dist(initialize="True")
+        with pytest.raises(ValueError, match="Invalid initialize. Please choose from True or False."):
+            univariate_cont_dist(initialize=1)
+        with pytest.raises(ValueError, match="Invalid initialize. Please choose from True or False."):
+            univariate_cont_dist(initialize=0)
+        with pytest.raises(ValueError, match="Invalid initialize. Please choose from True or False."):
+            univariate_cont_dist(initialize=None)
+
     def test_distribution_parameters(self, univariate_cont_dist):
         assert isinstance(univariate_cont_dist().param_dict, dict)
         assert set(univariate_cont_dist().param_dict.keys()) == set(univariate_cont_dist().distribution_arg_names)
@@ -33,3 +43,9 @@ class TestClass(BaseTestClass):
         assert univariate_cont_dist().discrete is False
         assert univariate_cont_dist().tau is None
         assert isinstance(univariate_cont_dist().penalize_crossing, bool)
+
+        # Test initialize default value
+        assert isinstance(univariate_cont_dist().initialize, bool)
+        assert univariate_cont_dist().initialize is False
+        assert univariate_cont_dist(initialize=True).initialize is True
+        assert univariate_cont_dist(initialize=False).initialize is False

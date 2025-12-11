@@ -101,7 +101,10 @@ class LightGBMLSS:
         None
         """
         if self.start_values is None:
-            _, self.start_values = self.dist.calculate_start_values(dmatrix.get_label())
+            if self.dist.initialize:
+                _, self.start_values = self.dist.calculate_start_values(dmatrix.get_label())
+            else:
+                self.start_values = [0.5] * self.dist.n_dist_param
         init_score = (np.ones(shape=(dmatrix.get_label().shape[0], 1))) * self.start_values
         dmatrix.set_init_score(init_score.ravel(order="F"))
 

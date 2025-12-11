@@ -40,6 +40,19 @@ class TestClass(BaseTestClass):
         with pytest.raises(ValueError, match="Invalid loss_fn."):
             flow_dist(loss_fn="invalid_loss_fn")
 
+        # Test initialize parameter validation
+        with pytest.raises(ValueError, match="Invalid initialize. Please choose from True or False."):
+            flow_dist(initialize="True")
+        with pytest.raises(ValueError, match="Invalid initialize. Please choose from True or False."):
+            flow_dist(initialize=1)
+        with pytest.raises(ValueError, match="Invalid initialize. Please choose from True or False."):
+            flow_dist(initialize=0)
+
+        # Test default and valid values
+        assert isinstance(flow_dist().initialize, bool)
+        assert flow_dist().initialize is False
+        assert flow_dist(initialize=True).initialize is True
+
     def test_distribution_parameters(self, flow_dist):
         assert isinstance(flow_dist().param_dict, dict)
         assert all(callable(func) for func in flow_dist().param_dict.values())

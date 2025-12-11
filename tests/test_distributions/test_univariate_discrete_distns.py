@@ -23,6 +23,16 @@ class TestClass(BaseTestClass):
         with pytest.raises(ValueError, match="Invalid loss function."):
             univariate_discrete_dist(loss_fn="invalid_loss_fn")
 
+        # Test initialize parameter validation
+        with pytest.raises(ValueError, match="Invalid initialize. Please choose from True or False."):
+            univariate_discrete_dist(initialize="True")
+        with pytest.raises(ValueError, match="Invalid initialize. Please choose from True or False."):
+            univariate_discrete_dist(initialize=1)
+        with pytest.raises(ValueError, match="Invalid initialize. Please choose from True or False."):
+            univariate_discrete_dist(initialize=0)
+        with pytest.raises(ValueError, match="Invalid initialize. Please choose from True or False."):
+            univariate_discrete_dist(initialize=None)
+
     def test_distribution_parameters(self, univariate_discrete_dist):
         assert isinstance(univariate_discrete_dist().param_dict, dict)
         assert set(univariate_discrete_dist().param_dict.keys()) == set(univariate_discrete_dist().distribution_arg_names)
@@ -38,3 +48,9 @@ class TestClass(BaseTestClass):
         assert univariate_discrete_dist().discrete is True
         assert univariate_discrete_dist().tau is None
         assert isinstance(univariate_discrete_dist().penalize_crossing, bool)
+
+        # Test initialize default value
+        assert isinstance(univariate_discrete_dist().initialize, bool)
+        assert univariate_discrete_dist().initialize is False
+        assert univariate_discrete_dist(initialize=True).initialize is True
+        assert univariate_discrete_dist(initialize=False).initialize is False

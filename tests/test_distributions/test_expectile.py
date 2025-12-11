@@ -23,6 +23,19 @@ class TestClass(BaseTestClass):
         assert isinstance(expectile_dist().loss_fn, str)
         assert expectile_dist().loss_fn is not None
 
+        # Test initialize parameter validation
+        with pytest.raises(ValueError, match="Invalid initialize. Please choose from True or False."):
+            expectile_dist(initialize="True")
+        with pytest.raises(ValueError, match="Invalid initialize. Please choose from True or False."):
+            expectile_dist(initialize=1)
+        with pytest.raises(ValueError, match="Invalid initialize. Please choose from True or False."):
+            expectile_dist(initialize=0)
+
+        # Test default and valid values
+        assert isinstance(expectile_dist().initialize, bool)
+        assert expectile_dist().initialize is False
+        assert expectile_dist(initialize=True).initialize is True
+
     def test_expectile_distribution_parameters(self, expectile_dist):
         assert isinstance(expectile_dist().param_dict, dict)
         assert set(expectile_dist().param_dict.keys()) == set(expectile_dist().distribution_arg_names)
