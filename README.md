@@ -38,6 +38,7 @@ We introduce a comprehensive framework that models and predicts the full conditi
 :white_check_mark: LightGBMLSS is available in Python. <br/>
 
 ## `News`
+:boom: [2025-12-11] Release of v0.6.0 LightGBMLSS to [PyPI](https://pypi.org/project/lightgbmlss/). <br/>
 :boom: [2024-01-19] Release of LightGBMLSS to [PyPI](https://pypi.org/project/lightgbmlss/). <br/>
 :boom: [2023-08-28] Release of v0.4.0 introduces Mixture-Densities. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
 :boom: [2023-07-20] Release of v0.3.0 introduces Normalizing Flows. See the [release notes](https://github.com/StatMixedML/LightGBMLSS/releases) for an overview. <br/>
@@ -80,7 +81,7 @@ If you use LightGBMLSS in your research, please cite it as:
   author = {Alexander M\"arz},
   title = {{LightGBMLSS: An Extension of LightGBM to Probabilistic Modelling}},
   year = {2023},
-  note = {GitHub repository, Version 0.5.0},
+  note = {GitHub repository, Version 0.6.0},
   howpublished = {\url{https://github.com/StatMixedML/LightGBMLSS}}
 }
 ```
