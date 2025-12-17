@@ -1,6 +1,8 @@
+import torch
 from torch.distributions import Normal as Gaussian_Torch
 from .distribution_utils import DistributionClass
 from ..utils import *
+from typing import List
 
 
 class Gaussian(DistributionClass):
@@ -29,16 +31,12 @@ class Gaussian(DistributionClass):
         Loss function. Options are "nll" (negative log-likelihood) or "crps" (continuous ranked probability score).
         Note that if "crps" is used, the Hessian is set to 1, as the current CRPS version is not twice differentiable.
         Hence, using the CRPS disregards any variation in the curvature of the loss function.
-    initialize: bool
-        Whether to initialize the distributional parameters with unconditional start values. Initialization can help
-        to improve speed of convergence in some cases. However, it may also lead to early stopping or suboptimal
-        solutions if the unconditional start values are far from the optimal values.
     """
     def __init__(self,
                  stabilization: str = "None",
                  response_fn: str = "exp",
                  loss_fn: str = "nll",
-                 initialize: bool = False,
+                 natural_gradient: bool = False,
                  ):
 
         # Input Checks
@@ -71,5 +69,35 @@ class Gaussian(DistributionClass):
                          param_dict=param_dict,
                          distribution_arg_names=list(param_dict.keys()),
                          loss_fn=loss_fn,
-                         initialize=initialize,
+                         natural_gradient=natural_gradient,
                          )
+        
+    def compute_fisher_information_matrix(self, predt: List[torch.Tensor]) -> List[torch.Tensor]:
+        """
+        Compute Fisher Information Matrix diagonal for Gaussian distribution.
+        
+        For Gaussian with parameters [mu, log(sigma)]:
+        - FIM_mu = 1 / sigma^2
+        - FIM_log_sigma = 2 (constant for log-parameterization)
+        
+        Parameters
+        ----------
+        predt : List[torch.Tensor]
+            [mu_raw, log_sigma_raw]
+        
+        Returns
+        -------
+        fim : List[torch.Tensor]
+            [FIM_mu, FIM_log_sigma]
+        """
+        mu_raw, log_sigma_raw = predt[0], predt[1]
+        
+        # Transform to response scale
+        mu = self.param_dict["loc"](mu_raw)
+        sigma = self.param_dict["scale"](log_sigma_raw)
+        
+        # Compute FIM diagonal elements
+        fim_mu = 1.0 / (sigma ** 2 + 1e-12)
+        fim_log_sigma = torch.ones_like(log_sigma_raw) * 2.0
+        
+        return [fim_mu, fim_log_sigma]
