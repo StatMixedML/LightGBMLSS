@@ -57,6 +57,7 @@ class DistributionClass:
                  distribution_arg_names: List = None,
                  loss_fn: str = "nll",
                  initialize: bool = False,
+                 natural_gradient: bool = False,
                  tau: Optional[List[torch.Tensor]] = None,
                  penalize_crossing: bool = False,
                  ):
@@ -70,6 +71,7 @@ class DistributionClass:
         self.distribution_arg_names = distribution_arg_names
         self.loss_fn = loss_fn
         self.initialize = initialize
+        self.natural_gradient = natural_gradient
         self.tau = tau
         self.penalize_crossing = penalize_crossing
 

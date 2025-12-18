@@ -250,6 +250,7 @@ class TestClass:
         dist = Gaussian(stabilization="None",
                         response_fn="exp",
                         loss_fn="nll",
+                        initialize=False,
                         natural_gradient=True,
                         quantile_clipping=quantile_clipping,
                         clip_value=clip_value)
@@ -287,6 +288,7 @@ class TestClass:
         dist = Gaussian(stabilization="None",
                         response_fn="exp",
                         loss_fn="nll",
+                        initialize=False,
                         natural_gradient=True,
                         quantile_clipping=quantile_clipping,
                         clip_value=clip_value)
@@ -323,6 +325,7 @@ class TestClass:
         dist = Gaussian(stabilization="None",
                         response_fn="exp",
                         loss_fn="nll",
+                        initialize=False,
                         natural_gradient=True)
         model = LightGBMLSS(dist=dist)
 
