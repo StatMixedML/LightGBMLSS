@@ -36,7 +36,7 @@ class Gaussian(DistributionClass):
                  stabilization: str = "None",
                  response_fn: str = "exp",
                  loss_fn: str = "nll",
-                 initialize: bool = True,
+                 initialize: bool = False,
                  natural_gradient: bool = False,
                  ):
 

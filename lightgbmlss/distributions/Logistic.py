@@ -1,6 +1,7 @@
 from pyro.distributions import Logistic as Logistic_Torch
 from .distribution_utils import DistributionClass
 from ..utils import *
+from typing import List
 
 
 class Logistic(DistributionClass):
