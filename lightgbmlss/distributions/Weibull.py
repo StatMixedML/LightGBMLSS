@@ -1,6 +1,8 @@
 from torch.distributions import Weibull as Weibull_Torch
 from .distribution_utils import DistributionClass
 from ..utils import *
+from typing import List
+import math
 
 
 class Weibull(DistributionClass):
@@ -33,12 +35,15 @@ class Weibull(DistributionClass):
         Whether to initialize the distributional parameters with unconditional start values. Initialization can help
         to improve speed of convergence in some cases. However, it may also lead to early stopping or suboptimal
         solutions if the unconditional start values are far from the optimal values.
+    natural_gradient: bool
+        Whether to use natural gradient descent for optimization.
     """
     def __init__(self,
                  stabilization: str = "None",
                  response_fn: str = "exp",
                  loss_fn: str = "nll",
                  initialize: bool = False,
+                 natural_gradient: bool = False,
                  ):
 
         # Input Checks
@@ -72,4 +77,80 @@ class Weibull(DistributionClass):
                          distribution_arg_names=list(param_dict.keys()),
                          loss_fn=loss_fn,
                          initialize=initialize,
+                         natural_gradient=natural_gradient,
                          )
+        
+    def compute_fisher_information_matrix(self, predt: List[torch.Tensor]) -> List[torch.Tensor]:
+        """
+        Compute Fisher Information Matrix diagonal for Weibull distribution.
+        
+        For Weibull distribution with parameters (λ, β) where λ is scale and β is concentration:
+        - Fisher Information w.r.t. natural parameter η_λ where λ = g(η_λ):
+          I(η_λ) = (β²/λ²) * (g'(η_λ))²
+        - Fisher Information w.r.t. natural parameter η_β where β = g(η_β):
+          I(η_β) = [(γ-1)² + π²/6] * (g'(η_β))²
+          where γ ≈ 0.5772156649 is the Euler-Mascheroni constant
+        
+        Parameters
+        ----------
+        predt : List[torch.Tensor]
+            [eta_scale, eta_concentration] - raw parameters before response functions
+        
+        Returns
+        -------
+        fim : List[torch.Tensor]
+            [FIM_scale, FIM_concentration]
+        """
+        eta_scale, eta_concentration = predt[0], predt[1]
+        
+        # Apply response functions
+        response_fn_scale = self.param_dict["scale"]
+        response_fn_concentration = self.param_dict["concentration"]
+        scale = response_fn_scale(eta_scale)
+        concentration = response_fn_concentration(eta_concentration)
+        
+        # Euler-Mascheroni constant
+        euler_gamma = 0.5772156649015329
+        
+        # FIM for scale (λ) natural parameter
+        if response_fn_scale == exp_fn:
+            # For exp: g'(η) = λ, so I(η_λ) = β²
+            fim_scale = concentration.detach() ** 2
+        else:
+            # For other response functions: compute derivative
+            eta_scale_grad = eta_scale.detach().requires_grad_(True)
+            scale_grad = response_fn_scale(eta_scale_grad)
+            
+            g_prime_scale = torch.autograd.grad(
+                outputs=scale_grad.sum(),
+                inputs=eta_scale_grad,
+                create_graph=False,
+                retain_graph=False
+            )[0]
+            
+            # Fisher Information: I(η_λ) = (β²/λ²) * (g'(η))²
+            fim_scale = (concentration.detach() ** 2 / (scale.detach() ** 2 + 1e-12)) * (g_prime_scale ** 2)
+        
+        # FIM for concentration (β) natural parameter
+        # Constant factor: (γ-1)² + π²/6
+        constant_factor = (euler_gamma - 1.0) ** 2 + (math.pi ** 2) / 6.0
+        
+        if response_fn_concentration == exp_fn:
+            # For exp: g'(η) = β, so I(η_β) = constant_factor
+            fim_concentration = torch.ones_like(eta_concentration) * constant_factor
+        else:
+            # For other response functions: compute derivative
+            eta_concentration_grad = eta_concentration.detach().requires_grad_(True)
+            concentration_grad = response_fn_concentration(eta_concentration_grad)
+            
+            g_prime_concentration = torch.autograd.grad(
+                outputs=concentration_grad.sum(),
+                inputs=eta_concentration_grad,
+                create_graph=False,
+                retain_graph=False
+            )[0]
+            
+            # Fisher Information: I(η_β) = [(γ-1)² + π²/6] * (g'(η))²
+            fim_concentration = constant_factor * (g_prime_concentration ** 2)
+        
+        return [fim_scale, fim_concentration]
