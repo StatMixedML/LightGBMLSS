@@ -245,8 +245,8 @@ class LightGBMLSS:
                                 num_boost_round=num_boost_round,
                                 folds=folds,
                                 nfold=nfold,
-                                stratified=False,
-                                shuffle=False,
+                                stratified=stratified,
+                                shuffle=shuffle,
                                 metrics=None,
                                 init_model=init_model,
                                 fpreproc=fpreproc,
@@ -342,7 +342,22 @@ class LightGBMLSS:
                 hyper_params["boosting"] = trial.suggest_categorical("boosting", ["gbdt"])
 
             try:
-                pruning_callback = LightGBMPruningCallback(trial, self.dist.loss_fn)
+                def cv_pruning_callback(env):
+                    if env.evaluation_result_list is None:
+                        return
+
+                    for evaluation_result in env.evaluation_result_list:
+                        valid_name, metric_name, current_score, _ = evaluation_result[:4]
+                        if metric_name not in (self.dist.loss_fn, f"valid {self.dist.loss_fn}"):
+                            continue
+                        if valid_name not in ("cv_agg", "valid", "valid_0"):
+                            continue
+
+                        trial.report(current_score, step=env.iteration)
+                        if trial.should_prune():
+                            raise optuna.exceptions.TrialPruned()
+                        return
+
                 early_stopping_callback = lgb.early_stopping(stopping_rounds=early_stopping_rounds, verbose=False)
 
                 lgblss_param_tuning = self.cv(
@@ -350,7 +365,7 @@ class LightGBMLSS:
                     train_set,
                     num_boost_round=num_boost_round,
                     nfold=nfold,
-                    callbacks=[pruning_callback, early_stopping_callback],
+                    callbacks=[cv_pruning_callback, early_stopping_callback],
                     seed=seed,
                     shuffle=shuffle,
                 )
@@ -382,12 +397,19 @@ class LightGBMLSS:
         print("\nHyper-Parameter Optimization successfully finished.")
         print("  Number of finished trials: ", len(study.trials))
         print("  Best trial:")
+        completed_trials = [
+            trial for trial in study.trials if trial.state == optuna.trial.TrialState.COMPLETE
+        ]
+        if not completed_trials:
+            print("  No completed trials.")
+            return {}
+
         opt_param = study.best_trial
 
         # Add optimal stopping round
-        opt_param.params["opt_rounds"] = study.trials_dataframe()["user_attrs_opt_round"][
-            study.trials_dataframe()["value"].idxmin()]
-        opt_param.params["opt_rounds"] = int(opt_param.params["opt_rounds"])
+        trials_df = study.trials_dataframe().dropna(subset=["value"])
+        opt_rounds = trials_df.loc[trials_df["value"].idxmin(), "user_attrs_opt_round"]
+        opt_param.params["opt_rounds"] = int(opt_rounds)
 
         print("    Value: {}".format(opt_param.value))
         print("    Params: ")
