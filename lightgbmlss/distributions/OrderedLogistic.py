@@ -1,6 +1,5 @@
 import torch
 from torch.nn.functional import softplus
-from torch.autograd import grad as autograd
 from torch.optim import LBFGS
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from pyro.distributions import OrderedLogistic as OrderedLogistic_Pyro
@@ -124,6 +123,22 @@ class OrderedLogistic(DistributionClass):
 
         return cutpoints
 
+    def _validate_target(self, target: torch.Tensor) -> torch.Tensor:
+        """Validate labels are integers in [0, n_classes-1] and return as long tensor."""
+        target_flat = target.squeeze(-1)
+        if not torch.all(target_flat == target_flat.long()):
+            raise ValueError(
+                "Target labels must be integer-valued (e.g., 0, 1, 2), "
+                "but found non-integer values."
+            )
+        target_long = target_flat.long()
+        if target_long.min() < 0 or target_long.max() >= self.n_classes:
+            raise ValueError(
+                f"Target labels must be in {{0, ..., {self.n_classes - 1}}}, "
+                f"but found values in [{target_long.min().item()}, {target_long.max().item()}]."
+            )
+        return target_long
+
     def get_params_loss(
         self,
         predt: np.ndarray,
@@ -180,8 +195,9 @@ class OrderedLogistic(DistributionClass):
         cutpoints = self._raw_to_ordered_cutpoints(raw_cutpoints)  # (n_obs, K-1)
 
         # Construct distribution and compute NLL
+        target_long = self._validate_target(target)
         dist_fit = OrderedLogistic_Pyro(predictor=predictor, cutpoints=cutpoints)
-        loss = -torch.nansum(dist_fit.log_prob(target.squeeze(-1).long()))
+        loss = -torch.nansum(dist_fit.log_prob(target_long))
 
         return predt, loss
 
@@ -204,8 +220,9 @@ class OrderedLogistic(DistributionClass):
 
         cutpoints = self._raw_to_ordered_cutpoints(raw_cutpoints)
 
+        target_long = self._validate_target(target)
         dist = OrderedLogistic_Pyro(predictor=predictor, cutpoints=cutpoints)
-        loss = -torch.nansum(dist.log_prob(target.squeeze(-1).long()))
+        loss = -torch.nansum(dist.log_prob(target_long))
 
         return loss
 
@@ -217,8 +234,8 @@ class OrderedLogistic(DistributionClass):
         """
         Calculate starting values for ordinal regression parameters.
 
-        Initializes the predictor at 0 and spaces cutpoints at the empirical
-        quantile boundaries of the ordinal labels, then refines via L-BFGS.
+        Initializes the predictor at 0 and spaces cutpoints evenly across
+        the label range, then refines via L-BFGS.
 
         Arguments
         ---------
@@ -237,7 +254,7 @@ class OrderedLogistic(DistributionClass):
         target_t = torch.tensor(target, dtype=torch.float32).reshape(-1, 1)
         n_cutpoints = self.n_classes - 1
 
-        # Place cutpoints at roughly equal-probability boundaries
+        # Place cutpoints at evenly spaced positions across the label range
         boundaries = np.linspace(0, self.n_classes - 1, n_cutpoints + 2)[1:-1]
 
         init_raw = [boundaries[0]]
@@ -290,7 +307,7 @@ class OrderedLogistic(DistributionClass):
         Arguments
         ---------
         predt_params: pd.DataFrame
-            DataFrame with columns ["predictor", "cutpoint_1", ..., "cutpoint_{K-1}"].
+            DataFrame with columns matching distribution_arg_names.
             Cutpoints must already be ordered (output of predict_dist).
         n_samples: int
             Number of samples to draw per observation.
@@ -339,7 +356,9 @@ class OrderedLogistic(DistributionClass):
         start_values: np.ndarray
             Starting values for each distributional parameter.
         pred_type: str
-            - "parameters"  — predictor η and ordered cutpoints c₁...cₖ₋₁
+            - "parameters"  — predictor η and ordered cutpoints c₁...cₖ₋₁.
+              Column names match distribution_arg_names (cutpoint_raw_*),
+              but values are the transformed ordered cutpoints.
             - "class_probs" — P(y=k) for each class k ∈ {0, ..., K-1}
             - "samples"     — ordinal class samples
             - "quantiles"   — quantiles from the sample-based distribution
@@ -372,10 +391,9 @@ class OrderedLogistic(DistributionClass):
         raw_cutpoints = [predt[:, i].reshape(-1, 1) for i in range(1, self.n_dist_param)]
         cutpoints = self._raw_to_ordered_cutpoints(raw_cutpoints)  # (n_obs, K-1)
 
-        # Build parameter DataFrame with ordered cutpoints
-        param_names = ["predictor"] + [
-            f"cutpoint_{i}" for i in range(1, self.n_classes)
-        ]
+        # Build parameter DataFrame using distribution_arg_names for consistency
+        # Values are ordered (transformed) cutpoints, not raw unconstrained ones
+        param_names = self.distribution_arg_names
         dist_params = torch.cat(
             [predictor.unsqueeze(1), cutpoints], dim=1
         ).detach().numpy()

@@ -171,6 +171,59 @@ class TestOrderedLogistic:
         assert np.all(np.isfinite(grad))
         assert np.all(np.isfinite(hess))
 
+    # ── predict_dist branches ────────────────────────────────────────
+    @pytest.fixture()
+    def trained_model(self):
+        """Train a minimal OrderedLogistic model for predict_dist tests."""
+        K = 3
+        dist = OrderedLogistic(n_classes=K)
+        model = LightGBMLSS(dist)
+
+        np.random.seed(42)
+        X = pd.DataFrame(np.random.randn(50, 2), columns=["x1", "x2"])
+        y = np.random.randint(0, K, size=50).astype(float)
+
+        dtrain = lgb.Dataset(X, label=y)
+        params = {"eta": 0.1, "verbose": -1}
+        model.train(params, dtrain, num_boost_round=5)
+
+        return model, dist, X
+
+    def test_predict_dist_parameters(self, trained_model):
+        model, dist, X = trained_model
+        df = dist.predict_dist(model.booster, X, model.start_values, pred_type="parameters")
+        assert isinstance(df, pd.DataFrame)
+        assert df.shape == (len(X), dist.n_dist_param)
+        assert list(df.columns) == dist.distribution_arg_names
+        assert not df.isna().any().any()
+        assert not np.isinf(df.values).any()
+
+    def test_predict_dist_class_probs(self, trained_model):
+        model, dist, X = trained_model
+        df = dist.predict_dist(model.booster, X, model.start_values, pred_type="class_probs")
+        assert isinstance(df, pd.DataFrame)
+        assert df.shape == (len(X), dist.n_classes)
+        assert list(df.columns) == [f"P(y={k})" for k in range(dist.n_classes)]
+        # Each row should sum to ~1
+        np.testing.assert_allclose(df.sum(axis=1).values, 1.0, atol=1e-5)
+        assert (df.values >= 0).all()
+
+    def test_predict_dist_samples(self, trained_model):
+        model, dist, X = trained_model
+        n_samples = 100
+        df = dist.predict_dist(model.booster, X, model.start_values, pred_type="samples", n_samples=n_samples)
+        assert df.shape == (len(X), n_samples)
+        assert df.min().min() >= 0
+        assert df.max().max() <= dist.n_classes - 1
+        assert df.dtypes.apply(lambda d: np.issubdtype(d, np.integer)).all()
+
+    def test_predict_dist_quantiles(self, trained_model):
+        model, dist, X = trained_model
+        quantiles = [0.1, 0.5, 0.9]
+        df = dist.predict_dist(model.booster, X, model.start_values, pred_type="quantiles", quantiles=quantiles)
+        assert df.shape == (len(X), len(quantiles))
+        assert list(df.columns) == [f"quant_{q}" for q in quantiles]
+
     # ── K=2 (binary) edge case ────────────────────────────────────────
     def test_binary_case(self):
         """K=2 collapses to logistic regression with one cutpoint."""
