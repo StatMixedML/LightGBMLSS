@@ -144,6 +144,25 @@ class TestClass:
         # Assertions
         assert isinstance(opt_param, dict)
 
+    def test_model_cv_shuffle_respected(self, univariate_data, univariate_lgblss, monkeypatch):
+        # Unpack
+        dtrain, _, _, _ = univariate_data
+        lgblss = univariate_lgblss
+
+        captured = []
+
+        def fake_cv(params, train_set, **kwargs):
+            captured.append(kwargs.get("shuffle"))
+            return {}
+
+        monkeypatch.setattr(lgb, "cv", fake_cv)
+
+        lgblss.cv({}, dtrain, shuffle=True, nfold=2)
+        lgblss.cv({}, dtrain, shuffle=False, nfold=2)
+
+        # Assertions
+        assert captured == [True, False]
+
     def test_model_predict(self, univariate_data, univariate_lgblss, univariate_params):
         # Unpack
         dtrain, _, _, X_test = univariate_data
