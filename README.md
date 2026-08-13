@@ -91,7 +91,7 @@ If you use LightGBMLSS in your research, please cite it as:
 [![Arxiv link](https://img.shields.io/badge/arXiv-XGBoostLSS%3A%20An%20extension%20of%20XGBoost%20to%20probabilistic%20forecasting-color=brightgreen)](https://arxiv.org/abs/1907.03178) <br/>
 
 ## `Star History`
-<a href="https://star-history.com/#StatMixedML/LightGBMLSS&Date">
+<a href="https://star-history.dera.page/#StatMixedML/LightGBMLSS&Date">
     <img src="https://star-history.dera.page/svg?repos=StatMixedML/LightGBMLSS&type=Date" width="450">
 </a>
 
