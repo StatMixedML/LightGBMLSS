@@ -92,6 +92,6 @@ If you use LightGBMLSS in your research, please cite it as:
 
 ## `Star History`
 <a href="https://star-history.com/#StatMixedML/LightGBMLSS&Date">
-    <img src="https://api.star-history.com/svg?repos=StatMixedML/LightGBMLSS&type=Date" width="450">
+    <img src="https://star-history.dera.page/svg?repos=StatMixedML/LightGBMLSS&type=Date" width="450">
 </a>
 
