@@ -88,7 +88,8 @@ def get_distribution_classes(univariate: bool = True,
     distns_remove = [
         "SplineFlow",
         "Expectile",
-        "Mixture"
+        "Mixture",
+        "OrderedLogistic",  # Has custom param structure; tested separately
     ]
     distns = [item for item in distns if item not in distns_remove]
 
