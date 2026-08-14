@@ -1,5 +1,6 @@
 from ..utils import BaseTestClass
 import pytest
+import torch
 
 
 class TestClass(BaseTestClass):
@@ -49,3 +50,79 @@ class TestClass(BaseTestClass):
         assert univariate_cont_dist().initialize is False
         assert univariate_cont_dist(initialize=True).initialize is True
         assert univariate_cont_dist(initialize=False).initialize is False
+
+    def test_fisher_information_matrix_exp(self, univariate_cont_dist):
+        """Test FIM computation with exp response function."""
+        dist = univariate_cont_dist(response_fn="exp")
+        
+        # Create test data with appropriate dimensions
+        n_params = dist.n_dist_param
+        eta_tensors = [torch.tensor([0.0, 1.0, -1.0]) for _ in range(n_params)]
+        
+        # Compute FIM
+        fim = dist.compute_fisher_information_matrix(eta_tensors)
+        
+        # Assertions
+        assert len(fim) == n_params
+        for i, f in enumerate(fim):
+            assert f.shape == eta_tensors[i].shape
+            # All FIM values should be positive
+            assert torch.all(f > 0), f"FIM values for parameter {i} should be positive"
+            # Should not contain NaN or Inf
+            assert not torch.any(torch.isnan(f)), f"FIM contains NaN for parameter {i}"
+            assert not torch.any(torch.isinf(f)), f"FIM contains Inf for parameter {i}"
+
+    def test_fisher_information_matrix_softplus(self, univariate_cont_dist):
+        """Test FIM computation with softplus response function."""
+        dist = univariate_cont_dist(response_fn="softplus")
+        
+        # Create test data with appropriate dimensions
+        n_params = dist.n_dist_param
+        eta_tensors = [torch.tensor([0.5, 1.0, 1.5]) for _ in range(n_params)]
+        
+        # Compute FIM
+        fim = dist.compute_fisher_information_matrix(eta_tensors)
+        
+        # Assertions
+        assert len(fim) == n_params
+        for i, f in enumerate(fim):
+            assert f.shape == eta_tensors[i].shape
+            # All FIM values should be positive
+            assert torch.all(f > 0), f"FIM values for parameter {i} should be positive"
+            # Should not contain NaN or Inf
+            assert not torch.any(torch.isnan(f)), f"FIM contains NaN for parameter {i}"
+            assert not torch.any(torch.isinf(f)), f"FIM contains Inf for parameter {i}"
+
+    def test_fisher_information_matrix_numerical_stability(self, univariate_cont_dist):
+        """Test FIM computation with extreme values."""
+        dist = univariate_cont_dist(response_fn="exp")
+        
+        # Test with very small and large values
+        n_params = dist.n_dist_param
+        eta_tensors = [torch.tensor([-10.0, 0.0, 10.0]) for _ in range(n_params)]
+        
+        # Compute FIM
+        fim = dist.compute_fisher_information_matrix(eta_tensors)
+        
+        # Assertions
+        for i, f in enumerate(fim):
+            # Should not contain NaN or Inf
+            assert not torch.any(torch.isnan(f)), f"FIM contains NaN for parameter {i}"
+            assert not torch.any(torch.isinf(f)), f"FIM contains Inf for parameter {i}"
+            # All values should be positive
+            assert torch.all(f > 0), f"FIM values for parameter {i} should be positive"
+
+    def test_fisher_information_matrix_batch_dimensions(self, univariate_cont_dist):
+        """Test FIM computation with different batch dimensions."""
+        dist = univariate_cont_dist(response_fn="exp")
+        
+        # Test with different batch sizes
+        for batch_size in [1, 10, 100]:
+            eta_tensors = [torch.randn(batch_size) for _ in range(dist.n_dist_param)]
+            
+            fim = dist.compute_fisher_information_matrix(eta_tensors)
+            
+            assert len(fim) == dist.n_dist_param
+            for i, f in enumerate(fim):
+                assert f.shape == (batch_size,)
+                assert torch.all(f > 0), f"FIM values for parameter {i} should be positive"

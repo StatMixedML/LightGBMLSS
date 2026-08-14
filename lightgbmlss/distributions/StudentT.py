@@ -1,6 +1,8 @@
+import torch
 from torch.distributions import StudentT as StudentT_Torch
 from .distribution_utils import DistributionClass
 from ..utils import *
+from typing import List
 
 
 class StudentT(DistributionClass):
@@ -78,3 +80,61 @@ class StudentT(DistributionClass):
                          loss_fn=loss_fn,
                          initialize=initialize,
                          )
+
+    def compute_fisher_information_matrix(self, predt: List[torch.Tensor]) -> List[torch.Tensor]:
+        """
+        Compute Fisher Information Matrix diagonal for Student-T distribution.
+
+        For Student-T(ν, μ, σ):
+        - Fisher Information w.r.t. μ: I(μ) = (ν+1)/((ν+3)σ²)
+        - Fisher Information w.r.t. natural parameter η_σ where σ = g(η_σ):
+          I(η_σ) = (2ν/((ν+3)σ²)) * (g'(η_σ))²
+        - Fisher Information w.r.t. ν: Using simplified constant approximation
+
+        Parameters
+        ----------
+        predt : List[torch.Tensor]
+            [eta_df, eta_loc, eta_scale] - raw parameters before response functions
+
+        Returns
+        -------
+        fim : List[torch.Tensor]
+            [FIM_df, FIM_loc, FIM_scale]
+        """
+        eta_df, eta_loc, eta_scale = predt[0], predt[1], predt[2]
+        
+        # Apply response functions
+        df = self.param_dict["df"](eta_df)
+        loc = self.param_dict["loc"](eta_loc)
+        scale = self.param_dict["scale"](eta_scale)
+        
+        # FIM for loc (μ) - location parameter uses identity
+        fim_loc = (df + 1.0) / ((df + 3.0) * scale ** 2 + 1e-12)
+        
+        # FIM for scale (σ) natural parameter
+        response_fn_scale = self.param_dict["scale"]
+        if response_fn_scale == exp_fn:
+            # For exp: g'(η) = σ, so I(η_σ) = (2ν/((ν+3)σ²)) * σ² = 2ν/(ν+3)
+            fim_scale = (2.0 * df) / (df + 3.0 + 1e-12)
+        else:
+            # For other response functions: compute derivative
+            eta_scale_grad = eta_scale.detach().requires_grad_(True)
+            scale_grad = response_fn_scale(eta_scale_grad)
+            
+            g_prime = torch.autograd.grad(
+                outputs=scale_grad.sum(),
+                inputs=eta_scale_grad,
+                create_graph=False,
+                retain_graph=False
+            )[0]
+            
+            # Fisher Information: I(η_σ) = (2ν/((ν+3)σ²)) * (g'(η))²
+            fim_scale = (2.0 * df.detach() / ((df.detach() + 3.0) * scale.detach() ** 2 + 1e-12)) * (g_prime ** 2)
+        
+        # FIM for df (ν) - using simplified constant approximation
+        # The exact FIM for df is complex and not provided in standard references
+        # Using a conservative constant value
+        fim_df = torch.ones_like(eta_df) * 0.5
+        
+        return [fim_df, fim_loc, fim_scale]
+

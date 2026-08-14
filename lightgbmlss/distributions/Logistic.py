@@ -1,6 +1,7 @@
 from pyro.distributions import Logistic as Logistic_Torch
 from .distribution_utils import DistributionClass
 from ..utils import *
+from typing import List
 
 
 class Logistic(DistributionClass):
@@ -73,3 +74,59 @@ class Logistic(DistributionClass):
                          loss_fn=loss_fn,
                          initialize=initialize,
                          )
+
+    def compute_fisher_information_matrix(self, predt: List[torch.Tensor]) -> List[torch.Tensor]:
+        """
+        Compute Fisher Information Matrix diagonal for Logistic distribution.
+
+        For Logistic L(μ, σ):
+        - Fisher Information w.r.t. μ: I(μ) = 3/σ²
+        - Fisher Information w.r.t. natural parameter η_σ where σ = g(η_σ):
+          I(η_σ) = ((π²+3)/(9σ²)) * (g'(η_σ))²
+
+        For common response functions:
+        - exp: g'(η) = σ, so I(η_σ) = (π²+3)/9
+        - softplus: g'(η) = sigmoid(η), so I(η_σ) = ((π²+3)/(9σ²)) * sigmoid(η)²
+
+        Parameters
+        ----------
+        predt : List[torch.Tensor]
+            [eta_mu, eta_sigma] - raw parameters before response functions
+
+        Returns
+        -------
+        fim : List[torch.Tensor]
+            [FIM_mu, FIM_sigma]
+        """
+        eta_mu, eta_sigma = predt[0], predt[1]
+
+        # Apply response functions
+        response_fn_sigma = self.param_dict["scale"]
+        sigma = response_fn_sigma(eta_sigma)
+
+        # FIM for μ (location parameter uses identity)
+        fim_mu = 3.0 / (sigma ** 2 + 1e-12)
+
+        # Constant for logistic distribution
+        pi_squared_plus_3 = torch.pi ** 2 + 3.0
+
+        # FIM for σ natural parameter - optimize for exp case
+        if response_fn_sigma == exp_fn:
+            # For exp: g'(η) = σ, so I(η_σ) = (π²+3)/9
+            fim_sigma = torch.ones_like(eta_sigma) * (pi_squared_plus_3 / 9.0)
+        else:
+            # For other response functions: compute derivative
+            eta_sigma_grad = eta_sigma.detach().requires_grad_(True)
+            sigma_grad = response_fn_sigma(eta_sigma_grad)
+
+            g_prime = torch.autograd.grad(
+                outputs=sigma_grad.sum(),
+                inputs=eta_sigma_grad,
+                create_graph=False,
+                retain_graph=False
+            )[0]
+
+            # Fisher Information: I(η_σ) = ((π²+3)/(9σ²)) * (g'(η))²
+            fim_sigma = (pi_squared_plus_3 / (9.0 * (sigma.detach() ** 2 + 1e-12))) * (g_prime ** 2)
+
+        return [fim_mu, fim_sigma]
