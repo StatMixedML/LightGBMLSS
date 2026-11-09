@@ -417,6 +417,7 @@ class LightGBMLSS:
                 pred_type: str = "parameters",
                 n_samples: int = 1000,
                 quantiles: list = [0.1, 0.5, 0.9],
+                moments_inference: str = "none",
                 seed: str = 123):
         """
         Function that predicts from the trained model.
@@ -431,6 +432,7 @@ class LightGBMLSS:
             - "quantiles" calculates the quantiles from the predicted distribution.
             - "parameters" returns the predicted distributional parameters.
             - "expectiles" returns the predicted expectiles.
+            - "moments" returns the mean, variance, and (if implemented) mode.
         n_samples : int
             Number of samples to draw from the predicted distribution.
         quantiles : List[float]
@@ -451,6 +453,7 @@ class LightGBMLSS:
                                           pred_type=pred_type,
                                           n_samples=n_samples,
                                           quantiles=quantiles,
+                                          moments_inference=moments_inference,
                                           seed=seed)
 
         return predt_df
