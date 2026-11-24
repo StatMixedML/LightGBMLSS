@@ -13,3 +13,9 @@ build/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+
+# VS Code
+.vscode/
+
+# Pytest
+.pytest_cache/
