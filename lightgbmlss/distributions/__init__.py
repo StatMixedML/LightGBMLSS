@@ -24,3 +24,4 @@ from . import ZALN
 from . import SplineFlow
 from . import Mixture
 from . import Logistic
+from . import LogitNormal
